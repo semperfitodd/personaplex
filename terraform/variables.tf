@@ -76,6 +76,12 @@ variable "domain" {
   }
 }
 
+variable "ecr_repos" {
+  description = "Map of ECR repositories to create"
+  type        = map(string)
+  default     = {}
+}
+
 variable "eks_cluster_version" {
   description = "Kubernetes version for the EKS cluster"
   type        = string

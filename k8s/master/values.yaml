@@ -2,6 +2,7 @@ appEnvironments:
   dev:
     argoHostname: personaplex-dev-argocd.brewsentry.com
     awsAccountNumber: '704855531002'
+    awsRegion: us-east-1
     clusterName: personaplex-dev
     environment: personaplex-dev
     publicDomain: brewsentry.com
