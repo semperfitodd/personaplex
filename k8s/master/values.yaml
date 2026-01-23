@@ -1,6 +1,6 @@
 appEnvironments:
   dev:
-    argoHostname: personaplex.brewsentry.com
+    argoHostname: personaplex-dev-argocd.brewsentry.com
     awsAccountNumber: '704855531002'
     clusterName: personaplex-dev
     environment: personaplex-dev
