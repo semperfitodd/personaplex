@@ -1,0 +1,37 @@
+environment = "personaplex-dev"
+region      = "us-east-2"
+
+tags = {
+  Project     = "personaplex"
+  Owner       = "Todd"
+  Environment = "dev"
+  ManagedBy   = "Terraform"
+}
+
+vpc_cidr                     = "10.0.0.0/16"
+vpc_redundancy               = false
+enable_flow_log              = true
+flow_log_retention_days      = 7
+create_database_subnet_group = false
+
+eks_cluster_version                  = "1.31"
+cluster_endpoint_private_access      = true
+cluster_endpoint_public_access       = true
+cluster_endpoint_public_access_cidrs = ["0.0.0.0/0"]
+
+eks_node_instance_type = ["t3.large", "t3a.large"]
+cpu_node_capacity_type = "SPOT"
+cpu_node_min_size      = 1
+cpu_node_max_size      = 5
+cpu_node_desired_size  = 3
+
+eks_node_gpu_instance_type = ["g4dn.xlarge"]
+gpu_node_capacity_type     = "ON_DEMAND"
+gpu_node_min_size          = 0
+gpu_node_max_size          = 3
+gpu_node_desired_size      = 1
+
+node_volume_size       = 100
+node_volume_type       = "gp3"
+node_volume_iops       = 3000
+node_volume_throughput = 125
