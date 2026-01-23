@@ -1,0 +1,5 @@
+node_modules
+dist
+public/assets/encoderWorker.min.js
+public/assets/decoderWorker.min.js
+public/assets/decoderWorker.min.wasm

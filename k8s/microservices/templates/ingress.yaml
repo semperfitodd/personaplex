@@ -1,0 +1,48 @@
+{{- range $serviceName, $service := .Values.services }}
+{{- if and ($service.enabled | default true) (and $service.ingress ($service.ingress.enabled | default false)) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $service.namespace.name | default "default" }}
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/ip-address-type: {{ $service.ingress.ipAddressType | default "ipv4" }}
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/scheme: {{ $service.ingress.scheme | default "internet-facing" }}
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/target-type: {{ $service.ingress.targetType | default "ip" }}
+    alb.ingress.kubernetes.io/backend-protocol: {{ $service.ingress.backendProtocol | default "HTTP" }}
+    alb.ingress.kubernetes.io/target-group-attributes: {{ $service.ingress.targetGroupAttributes | default "stickiness.enabled=false" }}
+    {{- if $service.ingress.subdomain }}
+    external-dns.alpha.kubernetes.io/hostname: {{ $service.ingress.subdomain }}.{{ $.Values.publicDomain }}
+    {{- else if $service.ingress.hostname }}
+    external-dns.alpha.kubernetes.io/hostname: {{ $service.ingress.hostname }}
+    {{- end }}
+    {{- if $service.ingress.certificateArn }}
+    alb.ingress.kubernetes.io/certificate-arn: {{ $service.ingress.certificateArn }}
+    {{- end }}
+    {{- if $service.ingress.healthCheckPath }}
+    alb.ingress.kubernetes.io/healthcheck-path: {{ $service.ingress.healthCheckPath }}
+    {{- end }}
+    {{- if $service.ingress.annotations }}
+    {{- toYaml $service.ingress.annotations | nindent 4 }}
+    {{- end }}
+  labels:
+    app: {{ $serviceName }}
+    environment: {{ $.Values.environment }}
+spec:
+  rules:
+  - host: {{ if $service.ingress.subdomain }}{{ $service.ingress.subdomain }}.{{ $.Values.publicDomain }}{{ else }}{{ $service.ingress.hostname }}{{ end }}
+    http:
+      paths:
+      - path: {{ $service.ingress.path | default "/" }}
+        pathType: {{ $service.ingress.pathType | default "Prefix" }}
+        backend:
+          service:
+            name: {{ $serviceName }}
+            port:
+              number: {{ $service.servicePort | default 80 }}
+{{- end }}
+{{- end }}

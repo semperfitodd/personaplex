@@ -1,0 +1,84 @@
+services:
+  frontend:
+    enabled: true
+    namespace:
+      name: frontend
+      create: true
+    image:
+      repository: frontend
+      tag: '20260217135046'
+    replicas: 2
+    containerPort: 80
+    servicePort: 80
+    healthCheck:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    ingress:
+      enabled: true
+      subdomain: personaplex
+      scheme: internet-facing
+      targetType: ip
+      backendProtocol: HTTP
+      healthCheckPath: /health
+
+  personaplex:
+    enabled: true
+    namespace:
+      name: personaplex
+      create: true
+    serviceAccount:
+      roleName: personaplex-secrets
+    image:
+      repository: personaplex
+      tag: '20260217135046'
+    replicas: 1
+    containerPort: 8998
+    servicePort: 8998
+    awsSecrets:
+      - secretName: "{{ .Values.environment }}/hf-token"
+        jmesPath:
+          - path: "HF_TOKEN"
+            objectAlias: "HF_TOKEN"
+            key: "HF_TOKEN"
+    env:
+      CPU_OFFLOAD: "false"
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+      TORCHDYNAMO_DISABLE: "1"
+      CUDA_MODULE_LOADING: "LAZY"
+      OMP_NUM_THREADS: "4"
+    healthCheck:
+      path: /
+      scheme: HTTPS
+      startupProbe: true
+      startupInitialDelaySeconds: 60
+      startupPeriodSeconds: 30
+      startupFailureThreshold: 14
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    resources:
+      requests:
+        cpu: 6000m
+        memory: 28Gi
+        nvidia.com/gpu: 1
+      limits:
+        cpu: 8000m
+        memory: 30Gi
+        nvidia.com/gpu: 1
+    envFrom:
+      - secretRef:
+          name: personaplex-secrets
+    volumes:
+      - name: secrets-store
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: personaplex-secrets
+    volumeMounts:
+      - name: secrets-store
+        mountPath: /mnt/secrets-store
+        readOnly: true
+    nodeSelector:
+      gpu: "true"

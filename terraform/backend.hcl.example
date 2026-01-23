@@ -1,0 +1,3 @@
+bucket = "your-terraform-state-bucket"
+key    = "personaplex/terraform.tfstate"
+region = "us-east-2"

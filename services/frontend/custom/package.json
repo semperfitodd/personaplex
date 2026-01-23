@@ -1,0 +1,19 @@
+{
+  "name": "personaplex-custom-ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run copy-workers && vite build",
+    "preview": "vite preview",
+    "copy-workers": "mkdir -p public/assets && cp node_modules/opus-recorder/dist/encoderWorker.min.js public/assets/ && cp node_modules/opus-recorder/dist/decoderWorker.min.js public/assets/ && cp node_modules/opus-recorder/dist/decoderWorker.min.wasm public/assets/",
+    "postinstall": "npm run copy-workers"
+  },
+  "dependencies": {
+    "opus-recorder": "^8.0.5"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}

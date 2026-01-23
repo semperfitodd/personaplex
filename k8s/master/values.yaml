@@ -1,0 +1,10 @@
+appEnvironments:
+  dev:
+    argoHostname: personaplex-argocd.brewsentry.com
+    awsAccountNumber: '704855531002'
+    awsRegion: us-east-1
+    clusterName: personaplex
+    environment: personaplex
+    publicDomain: brewsentry.com
+    publicDomainId: Z02805682TXYB0368277R
+    repoUrl: https://github.com/semperfitodd/personaplex.git

@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: devops
+
+  destination:
+    namespace: kube-system
+    server: https://kubernetes.default.svc
+
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: 1.19.0
+
+    helm:
+      parameters:
+        - name: domainFilters[0]
+          value: {{ .Values.publicDomain }}
+        - name: provider.name
+          value: aws
+        - name: extraArgs.aws-zone-type
+          value: public
+        - name: registry
+          value: txt
+        - name: txtOwnerId
+          value: {{ .Values.publicDomainId }}
+        - name: policy
+          value: upsert-only
+        - name: rbac.create
+          value: "true"
+        - name: serviceAccount.create
+          value: "true"
+        - name: serviceAccount.name
+          value: external-dns
+        - name: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+          value: arn:aws:iam::{{ .Values.awsAccountNumber }}:role/{{ .Values.environment }}-AmazonEKSRoute53ExternalDNS
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 2
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s

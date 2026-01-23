@@ -1,0 +1,60 @@
+# PersonaPlex
+
+EKS deployment of NVIDIA PersonaPlex with GPU support.
+
+## Services
+
+- **frontend**: Custom web UI with real-time speech-to-speech via WebSocket, served by Nginx
+- **personaplex**: PersonaPlex-7B model runtime (GPU)
+
+## Setup
+
+### Infrastructure
+
+```bash
+cd terraform
+cp backend.hcl.example backend.hcl
+cp terraform.tfvars.example terraform.tfvars
+
+terraform init -backend-config=backend.hcl
+terraform apply
+
+aws eks update-kubeconfig --name <cluster-name> --region <region>
+```
+
+### Secrets
+
+```bash
+aws secretsmanager put-secret-value \
+  --secret-id <env>/hf-token \
+  --secret-string '{"HF_TOKEN":"<token>"}'
+```
+
+### Deploy
+
+```bash
+cd k8s/devops
+helm install devops . -n argocd --create-namespace
+
+cd ../../services
+cp .env.example .env
+./build-and-push.sh
+
+cd ../k8s/microservices
+helm install microservices . -n argocd \
+  --set awsAccountNumber=<account> \
+  --set awsRegion=<region> \
+  --set environment=<env>
+```
+
+## GPU Requirements
+
+- **Minimum:** g6.2xlarge (L4, 24GB VRAM)
+- **Recommended:** g7e.2xlarge (L40S, 48GB VRAM)
+
+## Monitoring
+
+```bash
+kubectl logs -n personaplex -l app=personaplex -f
+kubectl top pod -n personaplex
+```
