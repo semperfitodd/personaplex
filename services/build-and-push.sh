@@ -37,6 +37,10 @@ echo "Registry: ${ECR_REGISTRY}"
 echo "Tag: ${TAG}"
 echo "=========================================="
 
+echo "Setting up Docker buildx..."
+docker buildx create --use --name multiarch-builder --driver docker-container 2>/dev/null || docker buildx use multiarch-builder || true
+docker buildx inspect --bootstrap
+
 echo "Logging in to ECR..."
 
 ECR_PASSWORD=$(aws ecr get-login-password --region "${AWS_REGION}" ${AWS_CLI_OPTS})
@@ -74,21 +78,18 @@ for service_dir in "${SCRIPT_DIR}"/*/ ; do
 
   echo ""
   echo "=========================================="
-  echo "Building ${service_name}..."
+  echo "Building ${service_name} for linux/amd64..."
   echo "=========================================="
   
   image_name="${ECR_REGISTRY}/${ENVIRONMENT}/${service_name}"
   
-  docker build -t "${image_name}:${TAG}" -t "${image_name}:latest" "$service_dir"
+  docker buildx build \
+    --platform linux/amd64 \
+    --tag "${image_name}:${TAG}" \
+    --push \
+    "$service_dir"
   
-  echo ""
-  echo "Pushing ${service_name}:${TAG}..."
-  docker push "${image_name}:${TAG}"
-  
-  echo "Pushing ${service_name}:latest..."
-  docker push "${image_name}:latest"
-  
-  echo "✓ ${service_name} pushed successfully"
+  echo "✓ ${service_name} built and pushed successfully"
 done
 
 echo ""

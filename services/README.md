@@ -13,6 +13,6 @@ chmod +x build-and-push.sh
 ```
 
 The script will:
-- Build all services with Dockerfiles
-- Tag with timestamp (YYYYMMDDHHMMSS) and `latest`
+- Build all services with Dockerfiles for linux/amd64
+- Tag with timestamp (YYYYMMDDHHMMSS)
 - Push to ECR at `{account}.dkr.ecr.{region}.amazonaws.com/{environment}/{service}`
