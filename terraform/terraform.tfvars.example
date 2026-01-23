@@ -1,5 +1,6 @@
 environment = "personaplex-dev"
 region      = "us-east-2"
+domain      = "example.com"
 
 tags = {
   Project     = "personaplex"

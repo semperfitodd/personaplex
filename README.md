@@ -1,26 +1,22 @@
 # Personaplex
 
-EKS-based infrastructure for Personaplex.
+EKS infrastructure with GitOps deployment via ArgoCD.
 
-## Structure
-
-```
-.
-├── terraform/          # EKS cluster and VPC infrastructure
-└── README.md
-```
-
-## Quick Start
+## Setup
 
 ```bash
 cd terraform
 cp backend.hcl.example backend.hcl
 cp terraform.tfvars.example terraform.tfvars
-# Edit both files with your values
 
-AWS_PROFILE=bscsandbox terraform init
-AWS_PROFILE=bscsandbox terraform plan -out=plan.out
-AWS_PROFILE=bscsandbox terraform apply plan.out
+terraform init -backend-config=backend.hcl
+terraform plan -out=plan.out
+terraform apply plan.out
 ```
 
-See `terraform/README.md` for details.
+## Access
+
+```bash
+aws eks update-kubeconfig --name <cluster-name> --region <region>
+kubectl get nodes
+```

@@ -1,6 +1,13 @@
 locals {
   node_group_name     = "${var.environment}_cpu"
   node_group_name_gpu = "${var.environment}_gpu"
+
+  node_metadata_options = {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
+    instance_metadata_tags      = "disabled"
+  }
 }
 
 data "aws_iam_policy" "AmazonSSMManagedInstanceCore" {
@@ -74,12 +81,7 @@ module "eks" {
 
       enable_monitoring = true
 
-      metadata_options = {
-        http_endpoint               = "enabled"
-        http_tokens                 = "required"
-        http_put_response_hop_limit = 2
-        instance_metadata_tags      = "disabled"
-      }
+      metadata_options = local.node_metadata_options
 
       block_device_mappings = {
         xvda = {
@@ -134,12 +136,7 @@ module "eks" {
 
       enable_monitoring = true
 
-      metadata_options = {
-        http_endpoint               = "enabled"
-        http_tokens                 = "required"
-        http_put_response_hop_limit = 2
-        instance_metadata_tags      = "disabled"
-      }
+      metadata_options = local.node_metadata_options
 
       block_device_mappings = {
         xvda = {
