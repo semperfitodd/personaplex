@@ -9,6 +9,10 @@ tags = {
   ManagedBy   = "Terraform"
 }
 
+ecr_repos = {
+  frontend = "frontend"
+}
+
 vpc_cidr                     = "10.0.0.0/16"
 vpc_redundancy               = false
 enable_flow_log              = true

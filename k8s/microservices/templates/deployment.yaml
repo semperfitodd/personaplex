@@ -1,0 +1,72 @@
+{{- range $serviceName, $service := .Values.services }}
+{{- if $service.enabled | default true }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $service.namespace.name | default "default" }}
+  labels:
+    app: {{ $serviceName }}
+    environment: {{ $.Values.environment }}
+spec:
+  replicas: {{ $service.replicas | default 2 }}
+  selector:
+    matchLabels:
+      app: {{ $serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $serviceName }}
+        environment: {{ $.Values.environment }}
+    spec:
+      containers:
+      - name: {{ $serviceName }}
+        image: {{ $.Values.awsAccountNumber }}.dkr.ecr.{{ $.Values.awsRegion | default "us-east-2" }}.amazonaws.com/{{ $.Values.environment }}/{{ $service.image.repository }}:{{ $service.image.tag }}
+        imagePullPolicy: {{ $service.imagePullPolicy | default "Always" }}
+        ports:
+        - containerPort: {{ $service.containerPort | default 80 }}
+          protocol: TCP
+        {{- if $service.env }}
+        env:
+        {{- range $key, $value := $service.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if $service.envFrom }}
+        envFrom:
+        {{- toYaml $service.envFrom | nindent 8 }}
+        {{- end }}
+        {{- if $service.healthCheck }}
+        livenessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.path | default "/health" }}
+            port: {{ $service.containerPort | default 80 }}
+          initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 30 }}
+          periodSeconds: {{ $service.healthCheck.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
+        readinessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.path | default "/health" }}
+            port: {{ $service.containerPort | default 80 }}
+          initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 10 }}
+          periodSeconds: {{ $service.healthCheck.periodSeconds | default 5 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 3 }}
+          failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
+        {{- end }}
+        {{- if $service.resources }}
+        resources:
+          {{- toYaml $service.resources | nindent 10 }}
+        {{- else }}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,23 @@
+services:
+  frontend:
+    enabled: true
+    namespace:
+      name: frontend
+      create: true
+    image:
+      repository: frontend
+      tag: latest
+    replicas: 2
+    containerPort: 80
+    servicePort: 80
+    healthCheck:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    ingress:
+      enabled: true
+      subdomain: personaplex
+      scheme: internet-facing
+      targetType: ip
+      backendProtocol: HTTP
+      healthCheckPath: /health
