@@ -98,16 +98,7 @@ module "eks" {
       }
 
       labels = {
-        workload-type            = "gpu"
-        "nvidia.com/gpu.present" = "true"
-      }
-
-      taints = {
-        gpu = {
-          key    = "nvidia.com/gpu"
-          value  = "true"
-          effect = "NO_SCHEDULE"
-        }
+        gpu = "true"
       }
 
       pre_bootstrap_user_data = <<-EOT
