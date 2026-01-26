@@ -73,6 +73,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     (local.node_group_name_gpu) = {
+      ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = var.eks_node_gpu_instance_type
       capacity_type  = var.gpu_node_capacity_type
       min_size       = var.gpu_node_min_size
@@ -104,10 +105,21 @@ module "eks" {
       pre_bootstrap_user_data = <<-EOT
         #!/bin/bash
         set -ex
-        yum install -y cuda
-        distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-        curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
-        sudo yum install -y nvidia-container-toolkit
+
+        dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) gcc make
+
+        BASE_URL="https://us.download.nvidia.com/tesla"
+        DRIVER_VERSION="550.127.05"
+        DRIVER_FILE="NVIDIA-Linux-x86_64-$${DRIVER_VERSION}.run"
+
+        curl -fSsl -O "$${BASE_URL}/$${DRIVER_VERSION}/$${DRIVER_FILE}"
+        chmod +x "$${DRIVER_FILE}"
+        ./"$${DRIVER_FILE}" --silent --install-libglvnd
+
+        dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
+        dnf install -y nvidia-container-toolkit
+        nvidia-ctk runtime configure --runtime=containerd
+        systemctl restart containerd
       EOT
 
       iam_role_additional_policies = {
