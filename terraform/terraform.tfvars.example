@@ -31,7 +31,7 @@ cpu_node_min_size      = 1
 cpu_node_max_size      = 5
 cpu_node_desired_size  = 3
 
-eks_node_gpu_instance_type = ["g4dn.xlarge"]
+eks_node_gpu_instance_type = ["g4dn.2xlarge"]
 gpu_node_capacity_type     = "ON_DEMAND"
 gpu_node_min_size          = 0
 gpu_node_max_size          = 3

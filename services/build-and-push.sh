@@ -32,6 +32,7 @@ fi
 
 TAG=$(date +%Y%m%d%H%M%S)
 ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+VALUES_FILE="${SCRIPT_DIR}/../k8s/microservices/values.yaml"
 
 echo "=========================================="
 echo "Building and pushing images"
@@ -98,6 +99,15 @@ for service_dir in "${SCRIPT_DIR}"/*/ ; do
     "$service_dir"
   
   echo "✓ ${service_name} built and pushed successfully"
+  
+  if [ -f "$VALUES_FILE" ]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sed -i '' "/^  ${service_name}:/,/^  [a-z]/ s/tag: '[^']*'/tag: '${TAG}'/" "$VALUES_FILE"
+    else
+      sed -i "/^  ${service_name}:/,/^  [a-z]/ s/tag: '[^']*'/tag: '${TAG}'/" "$VALUES_FILE"
+    fi
+    echo "✓ Updated ${service_name} tag in values.yaml"
+  fi
 done
 
 echo ""
@@ -105,3 +115,5 @@ echo "=========================================="
 echo "All images built and pushed successfully!"
 echo "Tag: ${TAG}"
 echo "=========================================="
+echo ""
+echo "Updated tags in ${VALUES_FILE}"
