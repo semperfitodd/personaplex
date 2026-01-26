@@ -71,13 +71,7 @@ services:
         mountPath: /mnt/secrets-store
         readOnly: true
     nodeSelector:
-      workload-type: gpu
-      nvidia.com/gpu.present: "true"
-    tolerations:
-      - key: nvidia.com/gpu
-        operator: Equal
-        value: "true"
-        effect: NoSchedule
+      gpu: "true"
     ingress:
       enabled: true
       subdomain: api
