@@ -6,10 +6,16 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260126153620'
+      tag: '20260126153903'
     replicas: 2
     containerPort: 80
     servicePort: 80
+    securityContext:
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+      capabilities:
+        drop:
+          - ALL
     healthCheck:
       path: /health
       initialDelaySeconds: 10
@@ -31,7 +37,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260126153620'
+      tag: '20260126153903'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
@@ -53,8 +59,8 @@ services:
         memory: 16Gi
         nvidia.com/gpu: 1
       limits:
-        cpu: 8000m
-        memory: 32Gi
+        cpu: 6000m
+        memory: 24Gi
         nvidia.com/gpu: 1
     envFrom:
       - secretRef:
