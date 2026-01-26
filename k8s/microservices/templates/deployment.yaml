@@ -90,15 +90,6 @@ spec:
         {{- if $service.securityContext }}
         securityContext:
           {{- toYaml $service.securityContext | nindent 10 }}
-        {{- else }}
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-              - ALL
         {{- end }}
 {{- end }}
 {{- end }}
