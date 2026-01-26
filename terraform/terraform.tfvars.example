@@ -10,7 +10,8 @@ tags = {
 }
 
 ecr_repos = {
-  frontend = "frontend"
+  frontend    = "frontend"
+  personaplex = "personaplex"
 }
 
 vpc_cidr                     = "10.0.0.0/16"
@@ -40,3 +41,5 @@ node_volume_size       = 100
 node_volume_type       = "gp3"
 node_volume_iops       = 3000
 node_volume_throughput = 125
+
+personaplex_service_accounts = ["personaplex:personaplex-sa"]

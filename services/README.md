@@ -1,18 +1,13 @@
 # Services
 
-Microservices for Personaplex.
+- **frontend**: React/TypeScript web interface
+- **personaplex**: GPU-accelerated ML model runtime
 
-## Build and Push to ECR
+## Build and Push
 
 ```bash
 cp .env.example .env
-# Edit .env with your values
-
-chmod +x build-and-push.sh
 ./build-and-push.sh
 ```
 
-The script will:
-- Build all services with Dockerfiles for linux/amd64
-- Tag with timestamp (YYYYMMDDHHMMSS)
-- Push to ECR at `{account}.dkr.ecr.{region}.amazonaws.com/{environment}/{service}`
+Builds all services for linux/amd64 and pushes to ECR with timestamp tags.
