@@ -6,16 +6,10 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260126153903'
+      tag: '20260126154436'
     replicas: 2
     containerPort: 80
     servicePort: 80
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-      capabilities:
-        drop:
-          - ALL
     healthCheck:
       path: /health
       initialDelaySeconds: 10
