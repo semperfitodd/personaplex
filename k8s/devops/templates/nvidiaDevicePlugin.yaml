@@ -12,7 +12,7 @@ spec:
     helm:
       values: |
         nodeSelector:
-          workload-type: gpu
+          gpu: "true"
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
