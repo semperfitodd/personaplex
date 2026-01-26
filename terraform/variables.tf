@@ -258,3 +258,9 @@ variable "vpc_redundancy" {
   type        = bool
   default     = false
 }
+
+variable "personaplex_service_accounts" {
+  description = "List of namespace:serviceaccount for personaplex IRSA"
+  type        = list(string)
+  default     = ["personaplex:personaplex-sa"]
+}

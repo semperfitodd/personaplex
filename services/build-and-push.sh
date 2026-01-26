@@ -22,6 +22,8 @@ if [ -z "$AWS_ACCOUNT_ID" ] || [ -z "$AWS_REGION" ] || [ -z "$ENVIRONMENT" ]; th
   exit 1
 fi
 
+export HF_TOKEN
+
 AWS_CLI_OPTS=""
 if [ -n "$AWS_PROFILE" ]; then
   AWS_CLI_OPTS="--profile ${AWS_PROFILE}"
@@ -83,10 +85,16 @@ for service_dir in "${SCRIPT_DIR}"/*/ ; do
   
   image_name="${ECR_REGISTRY}/${ENVIRONMENT}/${service_name}"
   
+  BUILD_ARGS=""
+  if [ "$service_name" = "personaplex" ] && [ -n "$HF_TOKEN" ]; then
+    BUILD_ARGS="--secret id=hf_token,env=HF_TOKEN"
+  fi
+  
   docker buildx build \
     --platform linux/amd64 \
     --tag "${image_name}:${TAG}" \
     --push \
+    ${BUILD_ARGS} \
     "$service_dir"
   
   echo "✓ ${service_name} built and pushed successfully"

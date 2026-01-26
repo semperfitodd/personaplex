@@ -20,6 +20,21 @@ spec:
         app: {{ $serviceName }}
         environment: {{ $.Values.environment }}
     spec:
+      {{- if $service.serviceAccount }}
+      serviceAccountName: {{ $serviceName }}-sa
+      {{- end }}
+      {{- if $service.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $service.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $service.tolerations }}
+      tolerations:
+        {{- toYaml $service.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if $service.volumes }}
+      volumes:
+        {{- toYaml $service.volumes | nindent 8 }}
+      {{- end }}
       containers:
       - name: {{ $serviceName }}
         image: {{ $.Values.awsAccountNumber }}.dkr.ecr.{{ $.Values.awsRegion | default "us-east-2" }}.amazonaws.com/{{ $.Values.environment }}/{{ $service.image.repository }}:{{ $service.image.tag }}
@@ -37,6 +52,10 @@ spec:
         {{- if $service.envFrom }}
         envFrom:
         {{- toYaml $service.envFrom | nindent 8 }}
+        {{- end }}
+        {{- if $service.volumeMounts }}
+        volumeMounts:
+        {{- toYaml $service.volumeMounts | nindent 8 }}
         {{- end }}
         {{- if $service.healthCheck }}
         livenessProbe:
@@ -67,6 +86,19 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+        {{- end }}
+        {{- if $service.securityContext }}
+        securityContext:
+          {{- toYaml $service.securityContext | nindent 10 }}
+        {{- else }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+              - ALL
         {{- end }}
 {{- end }}
 {{- end }}
