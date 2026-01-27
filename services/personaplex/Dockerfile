@@ -19,16 +19,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/* \
     && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
-    && ln -sf /usr/bin/python3 /usr/bin/python
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && python3 -m pip install --upgrade pip setuptools wheel
 
 WORKDIR /app
 
 RUN git clone https://github.com/NVIDIA/personaplex.git /tmp/personaplex && \
-    pip3 install --no-cache-dir /tmp/personaplex/moshi/. && \
+    python3 -m pip install --no-cache-dir /tmp/personaplex/moshi/. && \
+    python3 -c "import moshi; print('Moshi installed successfully')" && \
     rm -rf /tmp/personaplex
 
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 RUN groupadd -r personaplex -g 1000 && \
     useradd -r -u 1000 -g personaplex -m -s /sbin/nologin personaplex
