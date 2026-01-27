@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260127170214'
+      tag: '20260127170920'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,7 +31,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260127170214'
+      tag: '20260127170920'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
@@ -41,6 +41,8 @@ services:
           - path: "HF_TOKEN"
             objectAlias: "HF_TOKEN"
             key: "HF_TOKEN"
+    env:
+      CPU_OFFLOAD: "true"
     healthCheck:
       path: /
       scheme: HTTPS
@@ -51,12 +53,12 @@ services:
       failureThreshold: 5
     resources:
       requests:
-        cpu: 4000m
-        memory: 16Gi
+        cpu: 8000m
+        memory: 24Gi
         nvidia.com/gpu: 1
       limits:
-        cpu: 6000m
-        memory: 24Gi
+        cpu: 12000m
+        memory: 32Gi
         nvidia.com/gpu: 1
     envFrom:
       - secretRef:
