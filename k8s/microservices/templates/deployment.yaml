@@ -58,6 +58,19 @@ spec:
         {{- toYaml $service.volumeMounts | nindent 8 }}
         {{- end }}
         {{- if $service.healthCheck }}
+        {{- if $service.healthCheck.startupProbe }}
+        startupProbe:
+          httpGet:
+            path: {{ $service.healthCheck.path | default "/health" }}
+            port: {{ $service.containerPort | default 80 }}
+            {{- if $service.healthCheck.scheme }}
+            scheme: {{ $service.healthCheck.scheme }}
+            {{- end }}
+          initialDelaySeconds: {{ $service.healthCheck.startupInitialDelaySeconds | default 60 }}
+          periodSeconds: {{ $service.healthCheck.startupPeriodSeconds | default 30 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 10 }}
+          failureThreshold: {{ $service.healthCheck.startupFailureThreshold | default 20 }}
+        {{- end }}
         livenessProbe:
           httpGet:
             path: {{ $service.healthCheck.path | default "/health" }}
