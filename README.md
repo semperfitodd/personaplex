@@ -49,16 +49,26 @@ helm install microservices . -n argocd \
 
 ## Configuration
 
-GPU resources in `k8s/microservices/values.yaml`:
+### GPU Requirements
+
+- **Minimum:** g5.xlarge (A10G, 24GB VRAM) with CPU_OFFLOAD enabled
+- **Recommended:** g5.2xlarge (A10G, 24GB VRAM) or larger
+- **Not supported:** T4 (15GB VRAM insufficient)
+
+Resources in `k8s/microservices/values.yaml`:
 
 ```yaml
+env:
+  CPU_OFFLOAD: "true"
 resources:
   requests:
     nvidia.com/gpu: 1
-    memory: 16Gi
+    cpu: 8000m
+    memory: 24Gi
   limits:
     nvidia.com/gpu: 1
-    memory: 24Gi
+    cpu: 12000m
+    memory: 32Gi
 ```
 
 ## Monitoring
