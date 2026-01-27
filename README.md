@@ -1,11 +1,11 @@
-# Personaplex
+# PersonaPlex
 
-EKS infrastructure with GitOps deployment via ArgoCD.
+EKS deployment of NVIDIA PersonaPlex with GPU support.
 
 ## Services
 
 - **frontend**: React/TypeScript web interface
-- **personaplex**: GPU-accelerated ML model runtime
+- **personaplex**: PersonaPlex-7B model runtime
 
 ## Setup
 
@@ -18,33 +18,53 @@ cp terraform.tfvars.example terraform.tfvars
 
 terraform init -backend-config=backend.hcl
 terraform apply
+
+aws eks update-kubeconfig --name <cluster-name> --region <region>
 ```
 
 ### Secrets
 
 ```bash
-# Set HF token
 aws secretsmanager put-secret-value \
-  --secret-id personaplex/hf-token \
-  --secret-string '{"HF_TOKEN":"YOUR_TOKEN"}'
-
-# Get IAM role ARN and update k8s/master/values.yaml
-terraform output personaplex_irsa_role_arn
+  --secret-id <env>/hf-token \
+  --secret-string '{"HF_TOKEN":"<token>"}'
 ```
 
-### Build and Deploy
+### Deploy
 
 ```bash
-cd services
+cd k8s/devops
+helm install devops . -n argocd --create-namespace
+
+cd ../../services
 cp .env.example .env
 ./build-and-push.sh
+
+cd ../k8s/microservices
+helm install microservices . -n argocd \
+  --set awsAccountNumber=<account> \
+  --set awsRegion=<region> \
+  --set environment=<env>
 ```
 
-ArgoCD automatically syncs changes.
+## Configuration
 
-## Access
+GPU resources in `k8s/microservices/values.yaml`:
+
+```yaml
+resources:
+  requests:
+    nvidia.com/gpu: 1
+    memory: 16Gi
+  limits:
+    nvidia.com/gpu: 1
+    memory: 24Gi
+```
+
+## Monitoring
 
 ```bash
-aws eks update-kubeconfig --name <cluster-name> --region <region>
-kubectl get pods -A
+kubectl logs -n personaplex -l app=personaplex -f
+kubectl top pod -n personaplex
+kubectl get events -n personaplex --sort-by='.lastTimestamp'
 ```

@@ -1,5 +1,22 @@
 data "aws_caller_identity" "this" {}
 
+data "aws_iam_policy_document" "external_dns" {
+  statement {
+    effect    = "Allow"
+    actions   = ["route53:ChangeResourceRecordSets"]
+    resources = [data.aws_route53_zone.public.arn]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "route53:ListHostedZones",
+      "route53:ListResourceRecordSets",
+      "route53:ListTagsForResource",
+    ]
+    resources = ["*"]
+  }
+}
+
 data "aws_region" "this" {}
 
 data "aws_route53_zone" "public" {
@@ -52,36 +69,8 @@ resource "aws_acm_certificate" "k8s" {
   }
 }
 
-resource "aws_route53_record" "k8s_verify" {
-  for_each = local.validation_records_map
-
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.public.zone_id
-}
-
-data "aws_iam_policy_document" "external_dns" {
-  statement {
-    effect    = "Allow"
-    actions   = ["route53:ChangeResourceRecordSets"]
-    resources = [data.aws_route53_zone.public.arn]
-  }
-  statement {
-    effect = "Allow"
-    actions = [
-      "route53:ListHostedZones",
-      "route53:ListResourceRecordSets",
-      "route53:ListTagsForResource",
-    ]
-    resources = ["*"]
-  }
-}
-
 resource "aws_iam_policy" "eks_alb" {
-  name = "${local.environment}_alb"
+  name = "${var.environment}_alb"
   policy = jsonencode(
     {
       Statement = [
@@ -308,16 +297,12 @@ resource "aws_iam_policy" "eks_alb" {
       ]
       Version = "2012-10-17"
   })
-
-  tags = var.tags
 }
 
 resource "aws_iam_policy" "external_dns" {
   name = local.aws_eks_external_dns_role_name
 
   policy = data.aws_iam_policy_document.external_dns.json
-
-  tags = var.tags
 }
 
 resource "aws_iam_role" "AmazonEKSLoadBalancerControllerRole" {
@@ -383,3 +368,15 @@ resource "aws_iam_role_policy_attachment" "external_dns" {
   policy_arn = aws_iam_policy.external_dns.arn
   role       = aws_iam_role.external_dns.name
 }
+
+resource "aws_route53_record" "k8s_verify" {
+  for_each = local.validation_records_map
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.public.zone_id
+}
+

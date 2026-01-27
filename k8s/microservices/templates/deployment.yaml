@@ -62,6 +62,9 @@ spec:
           httpGet:
             path: {{ $service.healthCheck.path | default "/health" }}
             port: {{ $service.containerPort | default 80 }}
+            {{- if $service.healthCheck.scheme }}
+            scheme: {{ $service.healthCheck.scheme }}
+            {{- end }}
           initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 30 }}
           periodSeconds: {{ $service.healthCheck.periodSeconds | default 10 }}
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
@@ -70,6 +73,9 @@ spec:
           httpGet:
             path: {{ $service.healthCheck.path | default "/health" }}
             port: {{ $service.containerPort | default 80 }}
+            {{- if $service.healthCheck.scheme }}
+            scheme: {{ $service.healthCheck.scheme }}
+            {{- end }}
           initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 10 }}
           periodSeconds: {{ $service.healthCheck.periodSeconds | default 5 }}
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 3 }}
