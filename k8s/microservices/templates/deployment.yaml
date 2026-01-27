@@ -65,7 +65,7 @@ spec:
             {{- if $service.healthCheck.scheme }}
             scheme: {{ $service.healthCheck.scheme }}
             {{- end }}
-          initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 30 }}
+          initialDelaySeconds: {{ $service.healthCheck.livenessInitialDelaySeconds | default $service.healthCheck.initialDelaySeconds | default 30 }}
           periodSeconds: {{ $service.healthCheck.periodSeconds | default 10 }}
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
           failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
@@ -76,7 +76,7 @@ spec:
             {{- if $service.healthCheck.scheme }}
             scheme: {{ $service.healthCheck.scheme }}
             {{- end }}
-          initialDelaySeconds: {{ $service.healthCheck.initialDelaySeconds | default 10 }}
+          initialDelaySeconds: {{ $service.healthCheck.readinessInitialDelaySeconds | default $service.healthCheck.initialDelaySeconds | default 10 }}
           periodSeconds: {{ $service.healthCheck.periodSeconds | default 5 }}
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 3 }}
           failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
