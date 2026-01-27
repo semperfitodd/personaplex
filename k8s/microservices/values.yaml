@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260127134626'
+      tag: '20260127143024'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,7 +31,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260127134626'
+      tag: '20260127143024'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
