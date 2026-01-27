@@ -14,6 +14,10 @@ data "aws_iam_policy" "AmazonSSMManagedInstanceCore" {
   name = "AmazonSSMManagedInstanceCore"
 }
 
+data "aws_ssm_parameter" "eks_gpu_ami" {
+  name = "/aws/service/eks/optimized-ami/1.31/amazon-linux-2-gpu/recommended/image_id"
+}
+
 module "ebs_csi_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "~> 5.5.6"
@@ -73,25 +77,27 @@ module "eks" {
 
   eks_managed_node_groups = {
     (local.node_group_name_gpu) = {
-      ami_type       = "AL2023_x86_64_STANDARD"
+      ami_type       = "AL2_x86_64_GPU"
       instance_types = var.eks_node_gpu_instance_type
-      capacity_type  = var.gpu_node_capacity_type
-      min_size       = var.gpu_node_min_size
-      max_size       = var.gpu_node_max_size
-      desired_size   = var.gpu_node_desired_size
+      #capacity_type  = "SPOT"
 
-      enable_monitoring = true
+      min_size     = 1
+      max_size     = 3
+      desired_size = 1
 
       metadata_options = local.node_metadata_options
+
+      use_latest_ami_release_version = true
+
+      ebs_optimized     = true
+      enable_monitoring = true
 
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size           = var.node_volume_size
-            volume_type           = var.node_volume_type
-            iops                  = var.node_volume_type == "gp3" ? var.node_volume_iops : null
-            throughput            = var.node_volume_type == "gp3" ? var.node_volume_throughput : null
+            volume_size           = 75
+            volume_type           = "gp3"
             encrypted             = true
             delete_on_termination = true
           }
@@ -99,56 +105,48 @@ module "eks" {
       }
 
       labels = {
-        gpu = "true"
+        gpu                      = true
+        "nvidia.com/gpu.present" = true
       }
 
       pre_bootstrap_user_data = <<-EOT
         #!/bin/bash
         set -ex
 
-        dnf install -y kernel-devel-$(uname -r) kernel-headers-$(uname -r) gcc make
+        # Install dependencies
+        yum install -y cuda
 
-        BASE_URL="https://us.download.nvidia.com/tesla"
-        DRIVER_VERSION="550.127.05"
-        DRIVER_FILE="NVIDIA-Linux-x86_64-$${DRIVER_VERSION}.run"
+        # Add the NVIDIA package repositories
+        distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+        curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.repo | sudo tee /etc/yum.repos.d/nvidia-docker.repo
 
-        curl -fSsl -O "$${BASE_URL}/$${DRIVER_VERSION}/$${DRIVER_FILE}"
-        chmod +x "$${DRIVER_FILE}"
-        ./"$${DRIVER_FILE}" --silent --install-libglvnd
-
-        dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
-        dnf install -y nvidia-container-toolkit
-        nvidia-ctk runtime configure --runtime=containerd
-        systemctl restart containerd
+        # Install the NVIDIA container runtime
+        sudo yum install -y nvidia-container-toolkit
       EOT
-
-      iam_role_additional_policies = {
-        AmazonSSMManagedInstanceCore       = data.aws_iam_policy.AmazonSSMManagedInstanceCore.arn
-        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-      }
-
-      tags = var.tags
     }
 
     (local.node_group_name) = {
+      ami_type       = "AL2_x86_64"
       instance_types = var.eks_node_instance_type
-      capacity_type  = var.cpu_node_capacity_type
-      min_size       = var.cpu_node_min_size
-      max_size       = var.cpu_node_max_size
-      desired_size   = var.cpu_node_desired_size
+      capacity_type  = "SPOT"
 
-      enable_monitoring = true
+      min_size     = 1
+      max_size     = 5
+      desired_size = 2
 
       metadata_options = local.node_metadata_options
+
+      use_latest_ami_release_version = true
+
+      ebs_optimized     = true
+      enable_monitoring = true
 
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            volume_size           = var.node_volume_size
-            volume_type           = var.node_volume_type
-            iops                  = var.node_volume_type == "gp3" ? var.node_volume_iops : null
-            throughput            = var.node_volume_type == "gp3" ? var.node_volume_throughput : null
+            volume_size           = 75
+            volume_type           = "gp3"
             encrypted             = true
             delete_on_termination = true
           }
@@ -156,12 +154,11 @@ module "eks" {
       }
 
       labels = {
-        workload-type = "cpu"
+        gpu = false
       }
 
       iam_role_additional_policies = {
-        AmazonSSMManagedInstanceCore       = data.aws_iam_policy.AmazonSSMManagedInstanceCore.arn
-        AmazonEC2ContainerRegistryReadOnly = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        AmazonSSMManagedInstanceCore = data.aws_iam_policy.AmazonSSMManagedInstanceCore.arn
       }
 
       tags = var.tags

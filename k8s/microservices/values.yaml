@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260126154436'
+      tag: '20260127134626'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,18 +31,19 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260126154436'
+      tag: '20260127134626'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
     awsSecrets:
-      - secretName: "personaplex/hf-token"
+      - secretName: "{{ .Values.environment }}/hf-token"
         jmesPath:
           - path: "HF_TOKEN"
             objectAlias: "HF_TOKEN"
             key: "HF_TOKEN"
     healthCheck:
       path: /
+      scheme: HTTPS
       initialDelaySeconds: 120
       periodSeconds: 30
       timeoutSeconds: 10

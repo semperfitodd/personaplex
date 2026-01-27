@@ -1,4 +1,4 @@
-ARG CUDA_VERSION=12.1.0
+ARG CUDA_VERSION=12.4.0
 ARG UBUNTU_VERSION=22.04
 FROM nvidia/cuda:${CUDA_VERSION}-runtime-ubuntu${UBUNTU_VERSION}
 
@@ -10,12 +10,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3.11 \
+    python3.11-venv \
     python3-pip \
     curl \
     ca-certificates \
     git \
     libopus-dev \
-    && rm -rf /var/lib/apt/lists/*
+    build-essential \
+    && rm -rf /var/lib/apt/lists/* \
+    && ln -sf /usr/bin/python3.11 /usr/bin/python3 \
+    && ln -sf /usr/bin/python3 /usr/bin/python
 
 WORKDIR /app
 
@@ -33,6 +37,8 @@ RUN chown -R personaplex:personaplex /app
 
 COPY --chown=personaplex:personaplex . .
 
+RUN chmod +x entrypoint.sh
+
 USER personaplex
 
 EXPOSE 8998
@@ -40,4 +46,4 @@ EXPOSE 8998
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f -k https://localhost:8998/ || exit 1
 
-CMD ["python3", "server.py"]
+ENTRYPOINT ["./entrypoint.sh"]
