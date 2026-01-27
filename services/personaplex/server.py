@@ -1,11 +1,11 @@
 import os
-import subprocess
+import sys
 import tempfile
 
 ssl_dir = tempfile.mkdtemp()
-cmd = ['python3', '-m', 'moshi.server', '--ssl', ssl_dir, '--host', '0.0.0.0']
+args = ['-m', 'moshi.server', '--ssl', ssl_dir, '--host', '0.0.0.0']
 
 if os.environ.get('CPU_OFFLOAD', 'false').lower() == 'true':
-    cmd.append('--cpu-offload')
+    args.append('--cpu-offload')
 
-subprocess.run(cmd)
+os.execvp('python3', ['python3'] + args)
