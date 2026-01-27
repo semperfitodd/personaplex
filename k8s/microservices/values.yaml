@@ -44,10 +44,11 @@ services:
     healthCheck:
       path: /
       scheme: HTTPS
-      initialDelaySeconds: 120
+      readinessInitialDelaySeconds: 300
+      livenessInitialDelaySeconds: 360
       periodSeconds: 30
       timeoutSeconds: 10
-      failureThreshold: 3
+      failureThreshold: 5
     resources:
       requests:
         cpu: 4000m
