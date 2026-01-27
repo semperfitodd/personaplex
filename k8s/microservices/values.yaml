@@ -53,7 +53,7 @@ services:
       failureThreshold: 5
     resources:
       requests:
-        cpu: 8000m
+        cpu: 7000m
         memory: 24Gi
         nvidia.com/gpu: 1
       limits:
