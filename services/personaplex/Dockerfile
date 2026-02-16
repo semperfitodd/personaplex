@@ -46,7 +46,7 @@ USER personaplex
 
 EXPOSE 8998
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=480s --retries=3 \
     CMD curl -f -k https://localhost:8998/ || exit 1
 
 ENTRYPOINT ["./entrypoint.sh"]

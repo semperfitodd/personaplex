@@ -1,7 +1,7 @@
 # Services
 
-- **frontend**: React/TypeScript web interface
-- **personaplex**: GPU-accelerated ML model runtime
+- **frontend**: Nginx reverse proxy to the PersonaPlex model server
+- **personaplex**: GPU-accelerated PersonaPlex-7B model runtime
 
 ## Build and Push
 
@@ -9,5 +9,3 @@
 cp .env.example .env
 ./build-and-push.sh
 ```
-
-Builds all services for linux/amd64 and pushes to ECR with timestamp tags.

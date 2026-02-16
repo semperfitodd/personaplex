@@ -4,8 +4,8 @@ EKS deployment of NVIDIA PersonaPlex with GPU support.
 
 ## Services
 
-- **frontend**: React/TypeScript web interface
-- **personaplex**: PersonaPlex-7B model runtime
+- **frontend**: Nginx reverse proxy to the PersonaPlex model server
+- **personaplex**: PersonaPlex-7B model runtime (GPU)
 
 ## Setup
 
@@ -47,34 +47,14 @@ helm install microservices . -n argocd \
   --set environment=<env>
 ```
 
-## Configuration
+## GPU Requirements
 
-### GPU Requirements
-
-- **Minimum:** g5.xlarge (A10G, 24GB VRAM) with CPU_OFFLOAD enabled
-- **Recommended:** g5.2xlarge (A10G, 24GB VRAM) or larger
-- **Not supported:** T4 (15GB VRAM insufficient)
-
-Resources in `k8s/microservices/values.yaml`:
-
-```yaml
-env:
-  CPU_OFFLOAD: "true"
-resources:
-  requests:
-    nvidia.com/gpu: 1
-    cpu: 8000m
-    memory: 24Gi
-  limits:
-    nvidia.com/gpu: 1
-    cpu: 12000m
-    memory: 32Gi
-```
+- **Minimum:** g5.xlarge (A10G, 24GB VRAM) with `CPU_OFFLOAD=true`
+- **Recommended:** g5.2xlarge or larger
 
 ## Monitoring
 
 ```bash
 kubectl logs -n personaplex -l app=personaplex -f
 kubectl top pod -n personaplex
-kubectl get events -n personaplex --sort-by='.lastTimestamp'
 ```
