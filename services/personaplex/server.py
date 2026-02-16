@@ -9,7 +9,7 @@ print(f"Working directory: {os.getcwd()}", flush=True)
 ssl_dir = tempfile.mkdtemp()
 print(f"SSL directory: {ssl_dir}", flush=True)
 
-args = ['-m', 'moshi.server', '--ssl', ssl_dir, '--host', '0.0.0.0']
+args = ['-m', 'moshi.server', '--ssl', ssl_dir, '--host', '0.0.0.0', '--port', '8998']
 
 cpu_offload = os.environ.get('CPU_OFFLOAD', 'false').lower() == 'true'
 if cpu_offload:

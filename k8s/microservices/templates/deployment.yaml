@@ -58,6 +58,7 @@ spec:
         {{- toYaml $service.volumeMounts | nindent 8 }}
         {{- end }}
         {{- if $service.healthCheck }}
+        {{/* startup probe commented out for troubleshooting - re-enable when ready
         {{- if $service.healthCheck.startupProbe }}
         startupProbe:
           httpGet:
@@ -71,6 +72,7 @@ spec:
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 10 }}
           failureThreshold: {{ $service.healthCheck.startupFailureThreshold | default 20 }}
         {{- end }}
+        */}}
         livenessProbe:
           httpGet:
             path: {{ $service.healthCheck.path | default "/health" }}
