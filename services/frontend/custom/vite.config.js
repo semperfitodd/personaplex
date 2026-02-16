@@ -1,10 +1,7 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig(({ command }) => ({
+export default defineConfig({
   base: '/',
-  build: {
-    outDir: 'dist',
-  },
   server: {
     proxy: {
       '/api': {
@@ -15,4 +12,4 @@ export default defineConfig(({ command }) => ({
       },
     },
   },
-}));
+});

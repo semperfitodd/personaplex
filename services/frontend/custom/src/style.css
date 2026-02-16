@@ -1,8 +1,6 @@
 :root {
   --bg-primary: #08080d;
-  --bg-secondary: rgba(17, 17, 24, 0.7);
   --bg-tertiary: #14141f;
-  --bg-elevated: rgba(30, 30, 46, 0.6);
   --bg-glass: rgba(20, 20, 32, 0.55);
   --text-primary: #eaeaef;
   --text-secondary: #8888a0;
@@ -14,7 +12,6 @@
   --accent-gradient: linear-gradient(135deg, #7c6aff 0%, #a78bfa 50%, #6d5ce7 100%);
   --success: #4ade80;
   --warning: #fbbf24;
-  --error: #f87171;
   --border: rgba(255, 255, 255, 0.06);
   --border-light: rgba(255, 255, 255, 0.1);
   --radius: 16px;
@@ -145,10 +142,6 @@ body {
 #status-dot.connecting {
   background: var(--warning);
   animation: pulse-dot 1s ease-in-out infinite;
-}
-
-#status-dot.disconnected {
-  background: var(--text-muted);
 }
 
 @keyframes pulse-dot {
@@ -346,10 +339,9 @@ body {
   border-radius: 2px;
 }
 
-/* ── Config Panel ───────────────────────────────────────────────────── */
+/* ── Settings trigger ────────────────────────────────────────────────── */
 
-#config-panel {
-  width: 100%;
+#settings-trigger {
   flex-shrink: 0;
 }
 
@@ -357,7 +349,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0;
+  padding: 0.5rem 0;
   background: none;
   border: none;
   color: var(--text-muted);
@@ -365,6 +357,7 @@ body {
   cursor: pointer;
   transition: color 0.2s;
   font-family: inherit;
+  touch-action: manipulation;
 }
 
 #config-toggle:hover,
@@ -372,37 +365,112 @@ body {
   color: var(--text-secondary);
 }
 
-#config-toggle svg {
-  transition: transform 0.3s;
-}
+/* ── Bottom sheet backdrop ──────────────────────────────────────────── */
 
-#config-toggle.open svg {
-  transform: rotate(90deg);
-}
-
-#config-body {
-  overflow: hidden;
-  transition: max-height 0.35s ease, opacity 0.25s ease;
-  max-height: 400px;
-  opacity: 1;
-}
-
-#config-body.collapsed {
-  max-height: 0;
+#sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
 
+#sheet-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── Bottom sheet ───────────────────────────────────────────────────── */
+
+#config-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 100;
+  max-height: 85dvh;
+  background: #13131e;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border: 1px solid var(--border-light);
+  border-bottom: none;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.4);
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#config-sheet.open {
+  transform: translateY(0);
+}
+
+#sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+
+#sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem 0.5rem;
+  flex-shrink: 0;
+}
+
+#sheet-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+#sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s;
+  touch-action: manipulation;
+}
+
+#sheet-close:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#sheet-body {
+  padding: 0.25rem 1.25rem calc(1.5rem + var(--safe-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* ── Config form controls ───────────────────────────────────────────── */
+
 .config-group {
-  margin-top: 0.6rem;
+  margin-top: 1rem;
 }
 
 .config-group label {
   display: block;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -410,56 +478,56 @@ body {
 .config-group select,
 .config-group textarea {
   width: 100%;
-  padding: 0.55rem 0.7rem;
+  padding: 0.75rem 0.85rem;
   border-radius: var(--radius-sm);
-  background: var(--bg-glass);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-light);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 1rem;
   outline: none;
   transition: border-color 0.2s;
   -webkit-appearance: none;
+  min-height: 48px;
 }
 
 .config-group select:focus,
 .config-group textarea:focus {
-  border-color: rgba(124, 106, 255, 0.4);
+  border-color: rgba(124, 106, 255, 0.5);
 }
 
 .config-group textarea {
   resize: vertical;
-  min-height: 56px;
+  min-height: 90px;
   line-height: 1.5;
 }
 
 .config-group select option {
-  background: var(--bg-tertiary);
+  background: #13131e;
   color: var(--text-primary);
 }
 
 .prompt-presets {
   display: flex;
-  gap: 0.35rem;
-  margin-bottom: 0.4rem;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
   flex-wrap: wrap;
 }
 
 .preset-btn {
-  padding: 0.25rem 0.55rem;
+  padding: 0.45rem 0.85rem;
   border-radius: 100px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-light);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.2s;
   font-family: inherit;
+  touch-action: manipulation;
+  min-height: 36px;
 }
 
-.preset-btn:hover,
 .preset-btn:active {
   background: var(--accent-dim);
   border-color: rgba(124, 106, 255, 0.3);

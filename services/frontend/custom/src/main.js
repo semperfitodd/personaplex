@@ -4,7 +4,6 @@ import './style.css';
 
 const BASE = import.meta.env.BASE_URL;
 
-// ── Default model parameters ─────────────────────────────────────────
 const DEFAULTS = {
   textTemperature: 0.7,
   textTopk: 25,
@@ -15,7 +14,6 @@ const DEFAULTS = {
   repetitionPenalty: 1.0,
 };
 
-// ── Opus decoder warmup BOS page (mono 48 kHz) ──────────────────────
 function createWarmupBosPage() {
   const opusHead = new Uint8Array([
     0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64,
@@ -36,7 +34,6 @@ function createWarmupBosPage() {
   return bos;
 }
 
-// ── State ────────────────────────────────────────────────────────────
 let audioContext = null;
 let workletNode = null;
 let recorder = null;
@@ -49,7 +46,6 @@ let micAnalyser = null;
 let animFrame = null;
 let smoothLevel = 0;
 
-// ── DOM refs ─────────────────────────────────────────────────────────
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const connectBtn = document.getElementById('connect-btn');
@@ -60,20 +56,16 @@ const orbGlow = document.getElementById('orb-glow');
 const orbHint = document.getElementById('orb-hint');
 const rings = document.querySelectorAll('.ring');
 const configToggle = document.getElementById('config-toggle');
-const configBody = document.getElementById('config-body');
+const sheetBackdrop = document.getElementById('sheet-backdrop');
+const configSheet = document.getElementById('config-sheet');
+const sheetClose = document.getElementById('sheet-close');
 const voiceSelect = document.getElementById('voice-select');
 const promptInput = document.getElementById('prompt-input');
 const presetBtns = document.querySelectorAll('.preset-btn');
 
-// ── UI helpers ───────────────────────────────────────────────────────
 function setStatus(status) {
-  statusDot.className = '';
-  statusDot.classList.add(status);
-  const labels = {
-    disconnected: 'Disconnected',
-    connecting: 'Connecting...',
-    connected: 'Connected',
-  };
+  statusDot.className = status;
+  const labels = { disconnected: 'Disconnected', connecting: 'Connecting...', connected: 'Connected' };
   statusText.textContent = labels[status] || status;
 
   const isConnected = status === 'connected';
@@ -115,11 +107,6 @@ function appendText(text) {
   transcript.scrollTop = transcript.scrollHeight;
 }
 
-function clearTranscript() {
-  transcript.innerHTML = '';
-}
-
-// ── Audio init ───────────────────────────────────────────────────────
 async function initAudio() {
   if (audioContext) return;
   audioContext = new AudioContext();
@@ -128,11 +115,8 @@ async function initAudio() {
   workletNode.connect(audioContext.destination);
 }
 
-// ── Opus decoder (runs in Web Worker) ────────────────────────────────
 function initDecoder() {
-  if (decoderWorker) {
-    decoderWorker.terminate();
-  }
+  if (decoderWorker) decoderWorker.terminate();
   decoderWorker = new Worker(BASE + 'assets/decoderWorker.min.js');
 
   decoderWorker.postMessage({
@@ -144,28 +128,18 @@ function initDecoder() {
   });
 
   setTimeout(() => {
-    decoderWorker.postMessage({
-      command: 'decode',
-      pages: createWarmupBosPage(),
-    });
+    decoderWorker.postMessage({ command: 'decode', pages: createWarmupBosPage() });
   }, 100);
 
   decoderWorker.onmessage = (e) => {
     if (!e.data) return;
-    const pcm = e.data[0];
-    workletNode.port.postMessage({
-      frame: pcm,
-      type: 'audio',
-      micDuration: micDuration,
-    });
+    workletNode.port.postMessage({ frame: e.data[0], type: 'audio', micDuration });
   };
 }
 
-// ── WebSocket URL builder ────────────────────────────────────────────
 function buildWSUrl() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  const host = window.location.host;
-  const url = new URL(`${proto}://${host}${BASE}api/chat`);
+  const url = new URL(`${proto}://${window.location.host}${BASE}api/chat`);
 
   url.searchParams.set('text_temperature', DEFAULTS.textTemperature);
   url.searchParams.set('text_topk', DEFAULTS.textTopk);
@@ -182,30 +156,20 @@ function buildWSUrl() {
   return url.toString();
 }
 
-// ── Orb audio visualization ──────────────────────────────────────────
 function startOrbAnimation() {
   if (!micAnalyser) return;
   const dataArray = new Float32Array(micAnalyser.fftSize);
 
   function animate() {
     micAnalyser.getFloatTimeDomainData(dataArray);
-
     let sum = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-      sum += dataArray[i] * dataArray[i];
-    }
-    const rms = Math.sqrt(sum / dataArray.length);
-    const level = Math.min(rms / 0.12, 1);
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i] * dataArray[i];
+    const level = Math.min(Math.sqrt(sum / dataArray.length) / 0.12, 1);
 
     smoothLevel += (level - smoothLevel) * 0.25;
-
-    const scale = 1 + smoothLevel * 0.3;
-    const glowOpacity = 0.3 + smoothLevel * 0.7;
-    const glowScale = 1 + smoothLevel * 0.15;
-
-    orb.style.transform = `scale(${scale})`;
-    orbGlow.style.opacity = glowOpacity;
-    orbGlow.style.transform = `scale(${glowScale})`;
+    orb.style.transform = `scale(${1 + smoothLevel * 0.3})`;
+    orbGlow.style.opacity = 0.3 + smoothLevel * 0.7;
+    orbGlow.style.transform = `scale(${1 + smoothLevel * 0.15})`;
 
     animFrame = requestAnimationFrame(animate);
   }
@@ -224,25 +188,18 @@ function stopOrbAnimation() {
   orbGlow.style.transform = '';
 }
 
-// ── Mic recording (Opus encoder) ─────────────────────────────────────
 async function startMic() {
   micStream = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-      channelCount: 1,
-    },
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
   });
 
   const sourceNode = audioContext.createMediaStreamSource(micStream);
   micAnalyser = audioContext.createAnalyser();
   micAnalyser.fftSize = 256;
   sourceNode.connect(micAnalyser);
-
   startOrbAnimation();
 
-  const opts = {
+  recorder = new Recorder({
     sourceNode,
     encoderPath: BASE + 'assets/encoderWorker.min.js',
     bufferLength: Math.round(960 * audioContext.sampleRate / 24000),
@@ -255,27 +212,22 @@ async function startMic() {
     encoderComplexity: 0,
     encoderApplication: 2049,
     streamPages: true,
-  };
-
-  recorder = new Recorder(opts);
+  });
 
   recorder.ondataavailable = (data) => {
     micDuration = recorder.encodedSamplePosition / 48000;
     if (ws && ws.readyState === WebSocket.OPEN) {
-      const chunk = data instanceof Uint8Array ? data : new Uint8Array(data);
-      ws.send(encodeAudio(chunk));
+      ws.send(encodeAudio(data instanceof Uint8Array ? data : new Uint8Array(data)));
     }
   };
 
-  recorder.start().catch((err) => {
-    console.error('Mic start failed:', err);
-  });
+  recorder.start().catch((err) => console.error('Mic start failed:', err));
 }
 
 function stopMic() {
   stopOrbAnimation();
   if (recorder) {
-    try { recorder.stop(); } catch (_) { /* ignore */ }
+    try { recorder.stop(); } catch (_) { /* already stopped */ }
     recorder = null;
   }
   if (micStream) {
@@ -286,28 +238,29 @@ function stopMic() {
   micDuration = 0;
 }
 
-// ── Connection lifecycle ─────────────────────────────────────────────
+function cleanup() {
+  connected = false;
+  setStatus('disconnected');
+  stopMic();
+  if (decoderWorker) {
+    decoderWorker.terminate();
+    decoderWorker = null;
+  }
+}
+
 async function connect() {
   await initAudio();
   await audioContext.resume();
-
-  clearTranscript();
+  transcript.innerHTML = '';
   setStatus('connecting');
-
   initDecoder();
   workletNode.port.postMessage({ type: 'reset' });
 
-  const url = buildWSUrl();
-  ws = new WebSocket(url);
+  ws = new WebSocket(buildWSUrl());
   ws.binaryType = 'arraybuffer';
 
-  ws.addEventListener('open', () => {
-    setStatus('connecting');
-  });
-
   ws.addEventListener('message', (e) => {
-    const data = new Uint8Array(e.data);
-    const msg = decodeMessage(data);
+    const msg = decodeMessage(new Uint8Array(e.data));
 
     switch (msg.type) {
       case 'handshake':
@@ -315,43 +268,27 @@ async function connect() {
         setStatus('connected');
         startMic();
         break;
-
       case 'audio':
         if (decoderWorker) {
-          decoderWorker.postMessage(
-            { command: 'decode', pages: msg.data },
-            [msg.data.buffer]
-          );
+          decoderWorker.postMessage({ command: 'decode', pages: msg.data }, [msg.data.buffer]);
         }
         break;
-
       case 'text':
         appendText(msg.data);
         break;
-
       case 'error':
         console.error('Server error:', msg.data);
         appendText(`[Error] ${msg.data}`);
-        break;
-
-      case 'ping':
         break;
     }
   });
 
   ws.addEventListener('close', () => {
-    connected = false;
-    setStatus('disconnected');
-    stopMic();
-    if (decoderWorker) {
-      decoderWorker.terminate();
-      decoderWorker = null;
-    }
+    ws = null;
+    cleanup();
   });
 
-  ws.addEventListener('error', (err) => {
-    console.error('WebSocket error:', err);
-  });
+  ws.addEventListener('error', (err) => console.error('WebSocket error:', err));
 }
 
 function disconnect() {
@@ -359,16 +296,9 @@ function disconnect() {
     ws.close();
     ws = null;
   }
-  stopMic();
-  connected = false;
-  setStatus('disconnected');
-  if (decoderWorker) {
-    decoderWorker.terminate();
-    decoderWorker = null;
-  }
+  cleanup();
 }
 
-// ── Event listeners ──────────────────────────────────────────────────
 connectBtn.addEventListener('click', () => {
   if (connected || (ws && ws.readyState === WebSocket.CONNECTING)) {
     disconnect();
@@ -377,16 +307,22 @@ connectBtn.addEventListener('click', () => {
   }
 });
 
-configToggle.addEventListener('click', () => {
-  configBody.classList.toggle('collapsed');
-  configToggle.classList.toggle('open');
-});
+function openSheet() {
+  configSheet.classList.add('open');
+  sheetBackdrop.classList.add('open');
+}
+
+function closeSheet() {
+  configSheet.classList.remove('open');
+  sheetBackdrop.classList.remove('open');
+}
+
+configToggle.addEventListener('click', openSheet);
+sheetClose.addEventListener('click', closeSheet);
+sheetBackdrop.addEventListener('click', closeSheet);
 
 presetBtns.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    promptInput.value = btn.dataset.prompt;
-  });
+  btn.addEventListener('click', () => { promptInput.value = btn.dataset.prompt; });
 });
 
-// ── Ready ────────────────────────────────────────────────────────────
 setStatus('disconnected');

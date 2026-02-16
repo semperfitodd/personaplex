@@ -1,6 +1,6 @@
 # Services
 
-- **frontend**: Nginx reverse proxy to the PersonaPlex model server
+- **frontend**: Custom web UI with real-time speech-to-speech via WebSocket, served by Nginx
 - **personaplex**: GPU-accelerated PersonaPlex-7B model runtime
 
 ## Build and Push

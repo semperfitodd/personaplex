@@ -1,11 +1,3 @@
-/**
- * AudioWorklet processor for buffered playback of decoded PCM audio.
- * Based on the Moshi/PersonaPlex audio processor (MIT license).
- */
-function asMs(samples) {
-  return (samples * 1000 / sampleRate).toFixed(1);
-}
-
 function asSamples(ms) {
   return Math.round(ms * sampleRate / 1000);
 }
@@ -118,11 +110,9 @@ class MoshiProcessor extends AudioWorkletProcessor {
       return true;
     }
 
-    if (this.canPlay()) {
-      const delay = this.currentSamples() / sampleRate;
-      this.maxDelay = Math.max(this.maxDelay, delay);
-      this.minDelay = Math.min(this.minDelay, delay);
-    }
+    const delay = this.currentSamples() / sampleRate;
+    this.maxDelay = Math.max(this.maxDelay, delay);
+    this.minDelay = Math.min(this.minDelay, delay);
 
     let outIdx = 0;
     while (outIdx < output.length && this.frames.length) {

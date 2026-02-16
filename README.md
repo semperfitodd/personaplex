@@ -4,7 +4,7 @@ EKS deployment of NVIDIA PersonaPlex with GPU support.
 
 ## Services
 
-- **frontend**: Nginx reverse proxy to the PersonaPlex model server
+- **frontend**: Custom web UI with real-time speech-to-speech via WebSocket, served by Nginx
 - **personaplex**: PersonaPlex-7B model runtime (GPU)
 
 ## Setup
