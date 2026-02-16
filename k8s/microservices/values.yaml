@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260127182644'
+      tag: '20260216132137'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,7 +31,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260127182644'
+      tag: '20260216132137'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
@@ -46,15 +46,15 @@ services:
     healthCheck:
       path: /
       scheme: HTTPS
-      startupProbe: true
-      startupInitialDelaySeconds: 60
-      startupPeriodSeconds: 30
-      startupFailureThreshold: 30
-      readinessInitialDelaySeconds: 0
-      livenessInitialDelaySeconds: 0
+      # startupProbe: true
+      # startupInitialDelaySeconds: 60
+      # startupPeriodSeconds: 30
+      # startupFailureThreshold: 30
+      livenessInitialDelaySeconds: 600
+      readinessInitialDelaySeconds: 600
       periodSeconds: 30
       timeoutSeconds: 10
-      failureThreshold: 3
+      failureThreshold: 5
     resources:
       requests:
         cpu: 6000m
