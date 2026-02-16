@@ -53,9 +53,12 @@ let smoothLevel = 0;
 const statusDot = document.getElementById('status-dot');
 const statusText = document.getElementById('status-text');
 const connectBtn = document.getElementById('connect-btn');
+const connectBtnLabel = connectBtn.querySelector('span');
 const transcript = document.getElementById('transcript');
 const orb = document.getElementById('orb');
 const orbGlow = document.getElementById('orb-glow');
+const orbHint = document.getElementById('orb-hint');
+const rings = document.querySelectorAll('.ring');
 const configToggle = document.getElementById('config-toggle');
 const configBody = document.getElementById('config-body');
 const voiceSelect = document.getElementById('voice-select');
@@ -73,14 +76,27 @@ function setStatus(status) {
   };
   statusText.textContent = labels[status] || status;
 
-  orb.classList.toggle('active', status === 'connected');
-  orbGlow.classList.toggle('active', status === 'connected');
+  const isConnected = status === 'connected';
+  orb.classList.toggle('active', isConnected);
+  orbGlow.classList.toggle('active', isConnected);
+  rings.forEach((r) => r.classList.toggle('active', isConnected));
 
-  if (status === 'connected') {
-    connectBtn.textContent = 'Disconnect';
+  if (isConnected) {
+    orbHint.textContent = 'Listening...';
+    orbHint.classList.add('hidden');
+  } else if (status === 'connecting') {
+    orbHint.textContent = 'Connecting...';
+    orbHint.classList.remove('hidden');
+  } else {
+    orbHint.textContent = 'Tap connect to start talking';
+    orbHint.classList.remove('hidden');
+  }
+
+  if (isConnected) {
+    connectBtnLabel.textContent = 'Disconnect';
     connectBtn.classList.add('danger');
   } else {
-    connectBtn.textContent = status === 'connecting' ? 'Connecting...' : 'Connect';
+    connectBtnLabel.textContent = status === 'connecting' ? 'Connecting...' : 'Connect';
     connectBtn.classList.remove('danger');
     connectBtn.disabled = status === 'connecting';
   }
