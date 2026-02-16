@@ -1,23 +1,232 @@
-.container {
+/* ── Layout ── */
+
+.app {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   min-height: 100vh;
-  padding: 2rem;
+  padding: 2rem 1.5rem;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-h1 {
-  font-size: 4rem;
+.app-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.app-header h1 {
+  font-size: 3rem;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
 }
 
-p {
-  font-size: 1.5rem;
-  color: #a0a0a0;
+.subtitle {
+  font-size: 1.1rem;
+  color: #888;
+  letter-spacing: 0.02em;
+}
+
+.app-main {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* ── Config panel ── */
+
+.config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.config-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.config-group input,
+.config-group textarea {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: vertical;
+}
+
+.config-group input:focus,
+.config-group textarea:focus {
+  border-color: #667eea;
+}
+
+.config-group input:disabled,
+.config-group textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Action area ── */
+
+.action-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.mic-btn {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 24px rgba(102, 126, 234, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.mic-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 32px rgba(102, 126, 234, 0.45);
+}
+
+.mic-btn:active {
+  transform: scale(0.96);
+}
+
+.mic-btn--active {
+  background: linear-gradient(135deg, #e74c6f 0%, #cb2d6f 100%);
+  box-shadow: 0 4px 24px rgba(231, 76, 111, 0.35);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.mic-btn--active:hover {
+  box-shadow: 0 6px 32px rgba(231, 76, 111, 0.5);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 24px rgba(231, 76, 111, 0.35);
+  }
+  50% {
+    box-shadow: 0 4px 40px rgba(231, 76, 111, 0.6);
+  }
+}
+
+.action-label {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+/* ── Status ── */
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-grey {
+  background: #555;
+}
+.dot-yellow {
+  background: #e6a919;
+  animation: blink 1.2s ease-in-out infinite;
+}
+.dot-green {
+  background: #34d058;
+}
+.dot-red {
+  background: #e74c6f;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.status-text {
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* ── Error ── */
+
+.error-banner {
+  background: rgba(231, 76, 111, 0.12);
+  border: 1px solid rgba(231, 76, 111, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #f87171;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* ── Transcript ── */
+
+.transcript-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.transcript-panel h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.transcript-content {
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1rem;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #ddd;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
