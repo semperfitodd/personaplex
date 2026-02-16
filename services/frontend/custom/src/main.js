@@ -44,6 +44,10 @@ let ws = null;
 let decoderWorker = null;
 let micDuration = 0;
 let connected = false;
+let micStream = null;
+let micAnalyser = null;
+let animFrame = null;
+let smoothLevel = 0;
 
 // ── DOM refs ─────────────────────────────────────────────────────────
 const statusDot = document.getElementById('status-dot');
@@ -162,9 +166,68 @@ function buildWSUrl() {
   return url.toString();
 }
 
+// ── Orb audio visualization ──────────────────────────────────────────
+function startOrbAnimation() {
+  if (!micAnalyser) return;
+  const dataArray = new Float32Array(micAnalyser.fftSize);
+
+  function animate() {
+    micAnalyser.getFloatTimeDomainData(dataArray);
+
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+    const level = Math.min(rms / 0.12, 1);
+
+    smoothLevel += (level - smoothLevel) * 0.25;
+
+    const scale = 1 + smoothLevel * 0.3;
+    const glowOpacity = 0.3 + smoothLevel * 0.7;
+    const glowScale = 1 + smoothLevel * 0.15;
+
+    orb.style.transform = `scale(${scale})`;
+    orbGlow.style.opacity = glowOpacity;
+    orbGlow.style.transform = `scale(${glowScale})`;
+
+    animFrame = requestAnimationFrame(animate);
+  }
+
+  animFrame = requestAnimationFrame(animate);
+}
+
+function stopOrbAnimation() {
+  if (animFrame) {
+    cancelAnimationFrame(animFrame);
+    animFrame = null;
+  }
+  smoothLevel = 0;
+  orb.style.transform = '';
+  orbGlow.style.opacity = '';
+  orbGlow.style.transform = '';
+}
+
 // ── Mic recording (Opus encoder) ─────────────────────────────────────
-function startMic() {
+async function startMic() {
+  micStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true,
+      channelCount: 1,
+    },
+  });
+
+  const sourceNode = audioContext.createMediaStreamSource(micStream);
+  micAnalyser = audioContext.createAnalyser();
+  micAnalyser.fftSize = 256;
+  sourceNode.connect(micAnalyser);
+
+  startOrbAnimation();
+
   const opts = {
+    sourceNode,
     encoderPath: BASE + 'assets/encoderWorker.min.js',
     bufferLength: Math.round(960 * audioContext.sampleRate / 24000),
     encoderFrameSize: 20,
@@ -176,12 +239,6 @@ function startMic() {
     encoderComplexity: 0,
     encoderApplication: 2049,
     streamPages: true,
-    mediaTrackConstraints: {
-      echoCancellation: true,
-      noiseSuppression: true,
-      autoGainControl: true,
-      channelCount: 1,
-    },
   };
 
   recorder = new Recorder(opts);
@@ -200,10 +257,16 @@ function startMic() {
 }
 
 function stopMic() {
+  stopOrbAnimation();
   if (recorder) {
     try { recorder.stop(); } catch (_) { /* ignore */ }
     recorder = null;
   }
+  if (micStream) {
+    micStream.getTracks().forEach((t) => t.stop());
+    micStream = null;
+  }
+  micAnalyser = null;
   micDuration = 0;
 }
 
