@@ -57,7 +57,6 @@ spec:
         volumeMounts:
         {{- toYaml $service.volumeMounts | nindent 8 }}
         {{- end }}
-        {{/* All probes commented out for troubleshooting - re-enable when ready
         {{- if $service.healthCheck }}
         {{- if $service.healthCheck.startupProbe }}
         startupProbe:
@@ -95,7 +94,6 @@ spec:
           timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 3 }}
           failureThreshold: {{ $service.healthCheck.failureThreshold | default 3 }}
         {{- end }}
-        */}}
         {{- if $service.resources }}
         resources:
           {{- toYaml $service.resources | nindent 10 }}
