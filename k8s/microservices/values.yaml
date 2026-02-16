@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260216133140'
+      tag: '20260216142004'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,7 +31,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260216133140'
+      tag: '20260216142004'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
@@ -80,10 +80,3 @@ services:
         readOnly: true
     nodeSelector:
       gpu: "true"
-    ingress:
-      enabled: true
-      subdomain: api
-      scheme: internet-facing
-      targetType: ip
-      backendProtocol: HTTPS
-      healthCheckPath: /
