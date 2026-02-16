@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260216150759'
+      tag: '20260216153306'
     replicas: 2
     containerPort: 80
     servicePort: 80
