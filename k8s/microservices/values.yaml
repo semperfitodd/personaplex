@@ -42,7 +42,7 @@ services:
             objectAlias: "HF_TOKEN"
             key: "HF_TOKEN"
     env:
-      CPU_OFFLOAD: "true"
+      CPU_OFFLOAD: "false"
     healthCheck:
       path: /
       scheme: HTTPS
