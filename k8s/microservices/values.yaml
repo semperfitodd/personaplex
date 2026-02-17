@@ -46,7 +46,7 @@ services:
       PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
       TORCHDYNAMO_DISABLE: "1"
       CUDA_MODULE_LOADING: "LAZY"
-      OMP_NUM_THREADS: "4"
+      OMP_NUM_THREADS: "2"
     healthCheck:
       path: /
       scheme: HTTPS
@@ -59,12 +59,12 @@ services:
       failureThreshold: 3
     resources:
       requests:
-        cpu: 6000m
-        memory: 28Gi
+        cpu: 3000m
+        memory: 24Gi
         nvidia.com/gpu: 1
       limits:
-        cpu: 8000m
-        memory: 30Gi
+        cpu: 3500m
+        memory: 28Gi
         nvidia.com/gpu: 1
     envFrom:
       - secretRef:
