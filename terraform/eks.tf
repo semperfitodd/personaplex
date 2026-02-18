@@ -68,6 +68,9 @@ module "eks" {
         }
       })
     }
+    metrics-server = {
+      most_recent = true
+    }
   }
 
   cluster_tags = var.tags

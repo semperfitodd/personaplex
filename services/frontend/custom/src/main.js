@@ -7,11 +7,11 @@ const BASE = import.meta.env.BASE_URL;
 const DEFAULTS = {
   textTemperature: 0.7,
   textTopk: 25,
-  audioTemperature: 0.8,
-  audioTopk: 250,
+  audioTemperature: 0.65,
+  audioTopk: 80,
   padMult: 0,
   repetitionPenaltyContext: 64,
-  repetitionPenalty: 1.0,
+  repetitionPenalty: 1.05,
 };
 
 function createWarmupBosPage() {

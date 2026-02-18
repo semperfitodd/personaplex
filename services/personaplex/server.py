@@ -14,4 +14,8 @@ hf_repo = os.environ.get("HF_REPO", "")
 if hf_repo:
     args.extend(["--hf-repo", hf_repo])
 
+cfg_coef = os.environ.get("CFG_COEF", "")
+if cfg_coef:
+    args.extend(["--cfg-coef", cfg_coef])
+
 os.execvp("python3", ["python3"] + args)
