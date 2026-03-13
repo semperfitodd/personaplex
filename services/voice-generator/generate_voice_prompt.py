@@ -15,9 +15,6 @@ HF_REPO = os.environ.get("HF_REPO", "nvidia/personaplex-7b-v1")
 HF_TOKEN = os.environ.get("HF_TOKEN")
 
 
-MAX_DURATION_SECONDS = int(os.environ.get("MAX_DURATION", "120"))
-
-
 def concatenate_wavs(wav_dir, target_sr=24000):
     import torchaudio
 
@@ -29,10 +26,8 @@ def concatenate_wavs(wav_dir, target_sr=24000):
 
     print(f"Found {len(wav_files)} WAV files in {wav_dir}")
 
-    max_samples = MAX_DURATION_SECONDS * target_sr
     segments = []
     silence = torch.zeros(1, int(target_sr * 0.3))
-    total_samples = 0
 
     for wav_path in wav_files:
         wav, sr = torchaudio.load(str(wav_path))
@@ -40,15 +35,8 @@ def concatenate_wavs(wav_dir, target_sr=24000):
             wav = torchaudio.functional.resample(wav, sr, target_sr)
         if wav.shape[0] > 1:
             wav = wav.mean(dim=0, keepdim=True)
-
-        new_samples = wav.shape[-1] + silence.shape[-1]
-        if total_samples + new_samples > max_samples:
-            print(f"  Reached {MAX_DURATION_SECONDS}s cap after {len(segments) // 2} files")
-            break
-
         segments.append(wav)
         segments.append(silence)
-        total_samples += new_samples
         print(f"  Loaded {wav_path.name}: {wav.shape[-1] / target_sr:.1f}s")
 
     combined = torch.cat(segments, dim=-1)
