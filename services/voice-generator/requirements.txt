@@ -2,3 +2,4 @@ torchaudio
 torchcodec
 huggingface-hub
 pyloudnorm
+sentencepiece

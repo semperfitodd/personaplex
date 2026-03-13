@@ -49,6 +49,7 @@ def concatenate_wavs(wav_dir, target_sr=24000):
 
 
 def generate_embedding(combined_wav_path, output_path):
+    import sentencepiece
     from moshi.models import loaders, LMGen
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -57,6 +58,7 @@ def generate_embedding(combined_wav_path, output_path):
     print("Downloading model weights...")
     mimi_weight = hf_hub_download(HF_REPO, loaders.MIMI_NAME, token=HF_TOKEN)
     moshi_weight = hf_hub_download(HF_REPO, loaders.MOSHI_NAME, token=HF_TOKEN)
+    tokenizer_path = hf_hub_download(HF_REPO, loaders.TEXT_TOKENIZER_NAME, token=HF_TOKEN)
 
     print("Loading Mimi codec...")
     mimi = loaders.get_mimi(mimi_weight, device)
@@ -64,6 +66,10 @@ def generate_embedding(combined_wav_path, output_path):
     print("Loading Moshi LM...")
     lm = loaders.get_moshi_lm(moshi_weight, device=device)
     lm.eval()
+
+    text_tokenizer = sentencepiece.SentencePieceProcessor(tokenizer_path)
+    text_prompt = os.environ.get("TEXT_PROMPT", "You enjoy having a good conversation.")
+    text_prompt_tokens = text_tokenizer.encode(f"<system> {text_prompt} <system>")
 
     frame_size = int(mimi.sample_rate / mimi.frame_rate)
     lm_gen = LMGen(
@@ -73,6 +79,7 @@ def generate_embedding(combined_wav_path, output_path):
         device=device,
         frame_rate=mimi.frame_rate,
         save_voice_prompt_embeddings=True,
+        text_prompt_tokens=text_prompt_tokens,
     )
 
     mimi.streaming_forever(1)
