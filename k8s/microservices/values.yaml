@@ -101,7 +101,8 @@ jobs:
     image:
       repository: voice-generator
       tag: '20260313144627'
-    backoffLimit: 3
+    backoffLimit: 1
+    restartPolicy: Never
     env:
       WAV_DIR: "/mnt/input/wavs"
       OUTPUT_PATH: "/mnt/output/todd_voice.pt"
