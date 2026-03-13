@@ -29,6 +29,7 @@ spec:
     volumeHandle: {{ $serviceName }}-{{ $volName }}-s3
     volumeAttributes:
       bucketName: {{ tpl $vol.bucketName $ }}
+      authenticationSource: driver
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

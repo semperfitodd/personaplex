@@ -6,6 +6,7 @@ EKS deployment of NVIDIA PersonaPlex with GPU support.
 
 - **frontend**: Custom web UI with real-time speech-to-speech via WebSocket, served by Nginx
 - **personaplex**: PersonaPlex-7B model runtime (GPU)
+- **voice-generator**: Kubernetes Job that generates `.pt` voice embeddings from WAV files (GPU)
 
 ## Setup
 

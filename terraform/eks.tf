@@ -185,8 +185,11 @@ module "s3_csi_irsa_role" {
 
   oidc_providers = {
     ex = {
-      provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["${var.environment}:${var.environment}-s3-sa"]
+      provider_arn = module.eks.oidc_provider_arn
+      namespace_service_accounts = [
+        "kube-system:s3-csi-driver-sa",
+        "${var.environment}:${var.environment}-sa",
+      ]
     }
   }
 }

@@ -1,0 +1,140 @@
+{{- range $jobName, $job := .Values.jobs }}
+{{- if $job.enabled | default false }}
+{{- range $volName, $vol := $job.s3Volumes }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ $jobName }}-{{ $volName }}-s3-pv
+spec:
+  capacity:
+    storage: 1200Gi
+  accessModes:
+    {{- if $vol.readOnly }}
+    - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
+  storageClassName: ""
+  mountOptions:
+    - allow-other
+    - region {{ $.Values.awsRegion | default "us-east-1" }}
+    {{- if $vol.uid }}
+    - uid={{ $vol.uid }}
+    {{- end }}
+    {{- if $vol.gid }}
+    - gid={{ $vol.gid }}
+    {{- end }}
+    {{- if $vol.readOnly }}
+    - read-only
+    {{- end }}
+  csi:
+    driver: s3.csi.aws.com
+    volumeHandle: {{ $jobName }}-{{ $volName }}-s3
+    volumeAttributes:
+      bucketName: {{ tpl $vol.bucketName $ }}
+      authenticationSource: driver
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $jobName }}-{{ $volName }}-s3-pvc
+  namespace: {{ $job.namespace.name | default "default" }}
+spec:
+  accessModes:
+    {{- if $vol.readOnly }}
+    - ReadOnlyMany
+    {{- else }}
+    - ReadWriteMany
+    {{- end }}
+  storageClassName: ""
+  resources:
+    requests:
+      storage: 1200Gi
+  volumeName: {{ $jobName }}-{{ $volName }}-s3-pv
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  namespace: {{ $job.namespace.name | default "default" }}
+  labels:
+    app: {{ $jobName }}
+    environment: {{ $.Values.environment }}
+spec:
+  backoffLimit: {{ $job.backoffLimit | default 2 }}
+  template:
+    metadata:
+      labels:
+        app: {{ $jobName }}
+        environment: {{ $.Values.environment }}
+    spec:
+      restartPolicy: {{ $job.restartPolicy | default "OnFailure" }}
+      {{- if $job.serviceAccountName }}
+      serviceAccountName: {{ $job.serviceAccountName }}
+      {{- end }}
+      {{- if $job.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $job.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $job.tolerations }}
+      tolerations:
+        {{- toYaml $job.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if $job.secretProviderClass }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $job.secretProviderClass }}
+        {{- end }}
+        {{- range $volName, $vol := $job.s3Volumes }}
+        - name: s3-{{ $volName }}
+          persistentVolumeClaim:
+            claimName: {{ $jobName }}-{{ $volName }}-s3-pvc
+            {{- if hasKey $vol "readOnly" }}
+            readOnly: {{ $vol.readOnly }}
+            {{- else }}
+            readOnly: true
+            {{- end }}
+        {{- end }}
+      containers:
+      - name: {{ $jobName }}
+        image: {{ $.Values.awsAccountNumber }}.dkr.ecr.{{ $.Values.awsRegion | default "us-east-2" }}.amazonaws.com/{{ $.Values.environment }}/{{ $job.image.repository }}:{{ $job.image.tag }}
+        imagePullPolicy: {{ $job.imagePullPolicy | default "Always" }}
+        {{- if $job.env }}
+        env:
+        {{- range $key, $value := $job.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if $job.secretsEnvName }}
+        envFrom:
+          - secretRef:
+              name: {{ $job.secretsEnvName }}
+        {{- end }}
+        volumeMounts:
+          {{- if $job.secretProviderClass }}
+          - name: secrets-store
+            mountPath: /mnt/secrets-store
+            readOnly: true
+          {{- end }}
+          {{- range $volName, $vol := $job.s3Volumes }}
+          - name: s3-{{ $volName }}
+            mountPath: {{ $vol.mountPath }}
+            {{- if hasKey $vol "readOnly" }}
+            readOnly: {{ $vol.readOnly }}
+            {{- else }}
+            readOnly: true
+            {{- end }}
+          {{- end }}
+        {{- if $job.resources }}
+        resources:
+          {{- toYaml $job.resources | nindent 10 }}
+        {{- end }}
+{{- end }}
+{{- end }}
