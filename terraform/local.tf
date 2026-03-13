@@ -31,3 +31,10 @@ locals {
     module.vpc.public_route_table_ids,
   ])
 }
+
+resource "random_string" "this" {
+  length = 6
+
+  special = false
+  upper   = false
+}

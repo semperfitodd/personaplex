@@ -80,5 +80,12 @@ services:
       - name: secrets-store
         mountPath: /mnt/secrets-store
         readOnly: true
+    s3Volumes:
+      ptfiles:
+        bucketName: "{{ .Values.s3BucketPtfiles }}"
+        mountPath: /mnt/models
+        readOnly: true
+        uid: 1000
+        gid: 1000
     nodeSelector:
       gpu: "true"

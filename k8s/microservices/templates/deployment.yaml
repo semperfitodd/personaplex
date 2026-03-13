@@ -31,9 +31,17 @@ spec:
       tolerations:
         {{- toYaml $service.tolerations | nindent 8 }}
       {{- end }}
-      {{- if $service.volumes }}
+      {{- if or $service.volumes $service.s3Volumes }}
       volumes:
+        {{- if $service.volumes }}
         {{- toYaml $service.volumes | nindent 8 }}
+        {{- end }}
+        {{- range $volName, $vol := $service.s3Volumes }}
+        - name: s3-{{ $volName }}
+          persistentVolumeClaim:
+            claimName: {{ $serviceName }}-{{ $volName }}-s3-pvc
+            readOnly: {{ $vol.readOnly | default true }}
+        {{- end }}
       {{- end }}
       containers:
       - name: {{ $serviceName }}
@@ -53,9 +61,16 @@ spec:
         envFrom:
         {{- toYaml $service.envFrom | nindent 8 }}
         {{- end }}
-        {{- if $service.volumeMounts }}
+        {{- if or $service.volumeMounts $service.s3Volumes }}
         volumeMounts:
+        {{- if $service.volumeMounts }}
         {{- toYaml $service.volumeMounts | nindent 8 }}
+        {{- end }}
+        {{- range $volName, $vol := $service.s3Volumes }}
+        - name: s3-{{ $volName }}
+          mountPath: {{ $vol.mountPath }}
+          readOnly: {{ $vol.readOnly | default true }}
+        {{- end }}
         {{- end }}
         {{- if $service.healthCheck }}
         {{- if $service.healthCheck.startupProbe }}

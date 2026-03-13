@@ -1,3 +1,11 @@
+data "aws_iam_policy" "AmazonSSMManagedInstanceCore" {
+  name = "AmazonSSMManagedInstanceCore"
+}
+
+data "aws_ssm_parameter" "eks_gpu_ami" {
+  name = "/aws/service/eks/optimized-ami/1.31/amazon-linux-2-gpu/recommended/image_id"
+}
+
 locals {
   node_group_name     = "${var.environment}_cpu"
   node_group_name_gpu = "${var.environment}_gpu"
@@ -8,14 +16,6 @@ locals {
     http_put_response_hop_limit = 2
     instance_metadata_tags      = "disabled"
   }
-}
-
-data "aws_iam_policy" "AmazonSSMManagedInstanceCore" {
-  name = "AmazonSSMManagedInstanceCore"
-}
-
-data "aws_ssm_parameter" "eks_gpu_ami" {
-  name = "/aws/service/eks/optimized-ami/1.31/amazon-linux-2-gpu/recommended/image_id"
 }
 
 module "ebs_csi_irsa_role" {
@@ -57,6 +57,10 @@ module "eks" {
     }
     kube-proxy = {
       most_recent = true
+    }
+    aws-mountpoint-s3-csi-driver = {
+      service_account_role_arn = module.s3_csi_irsa_role.arn
+      most_recent              = true
     }
     vpc-cni = {
       most_recent    = true
@@ -169,4 +173,20 @@ module "eks" {
   }
 
   depends_on = [module.vpc]
+}
+
+module "s3_csi_irsa_role" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+
+  name                            = "${var.environment}_s3_csi"
+  attach_mountpoint_s3_csi_policy = true
+  mountpoint_s3_csi_bucket_arns   = [for b in module.s3_bucket : b.s3_bucket_arn]
+  mountpoint_s3_csi_path_arns     = [for b in module.s3_bucket : "${b.s3_bucket_arn}/*"]
+
+  oidc_providers = {
+    ex = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["${var.environment}:${var.environment}-s3-sa"]
+    }
+  }
 }
