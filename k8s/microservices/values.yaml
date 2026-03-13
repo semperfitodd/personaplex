@@ -6,7 +6,7 @@ services:
       create: true
     image:
       repository: frontend
-      tag: '20260313144047'
+      tag: '20260313144627'
     replicas: 2
     containerPort: 80
     servicePort: 80
@@ -31,7 +31,7 @@ services:
       roleName: personaplex-secrets
     image:
       repository: personaplex
-      tag: '20260313144047'
+      tag: '20260313144627'
     replicas: 1
     containerPort: 8998
     servicePort: 8998
@@ -100,12 +100,16 @@ jobs:
     secretsEnvName: personaplex-secrets
     image:
       repository: voice-generator
-      tag: '20260313144047'
+      tag: '20260313144627'
     backoffLimit: 3
     env:
       WAV_DIR: "/mnt/input/wavs"
       OUTPUT_PATH: "/mnt/output/todd_voice.pt"
       MAX_DURATION: "120"
+      TORCHDYNAMO_DISABLE: "1"
+      CUDA_MODULE_LOADING: "LAZY"
+      PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+      OMP_NUM_THREADS: "2"
     s3Volumes:
       wavfiles:
         bucketName: "{{ .Values.s3BucketWavfiles }}"
