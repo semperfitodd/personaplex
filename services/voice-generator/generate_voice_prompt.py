@@ -104,7 +104,7 @@ def generate_embedding(combined_wav_path, output_path):
 
     auto_pt = Path(combined_wav_path).with_suffix(".pt")
     if auto_pt.exists():
-        shutil.copy2(str(auto_pt), output_path)
+        shutil.copy(str(auto_pt), output_path)
         size_mb = os.path.getsize(output_path) / 1024 / 1024
         print(f"Embedding saved: {output_path} ({size_mb:.1f} MB)")
         return True
