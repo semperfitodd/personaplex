@@ -1,0 +1,63 @@
+gpuNodeLabel: gpu
+
+storageClass:
+  name: ebs-sc
+  type: gp3
+  reclaimPolicy: Retain
+
+charts:
+  argo-cd:
+    repoURL: https://argoproj.github.io/argo-helm
+    version: "9.4.15"
+    namespace: argocd
+    values:
+      configs:
+        params:
+          server.insecure: "true"
+
+  aws-load-balancer-controller:
+    repoURL: https://aws.github.io/eks-charts
+    version: "3.1.0"
+    namespace: kube-system
+    values:
+      clusterName: "{{ .Values.clusterName }}"
+      serviceAccount:
+        annotations:
+          eks.amazonaws.com/role-arn: '{{ .Values.albControllerRoleArn | default (printf "arn:aws:iam::%s:role/%s-AmazonEKSLoadBalancerController" .Values.awsAccountNumber .Values.environment) }}'
+
+  external-dns:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    version: "1.20.0"
+    namespace: kube-system
+    valuesTpl: |
+      domainFilters:
+        - "{{ .Values.publicDomain }}"
+      provider:
+        name: aws
+      extraArgs:
+        aws-zone-type: public
+      registry: txt
+      txtOwnerId: "{{ .Values.publicDomainId }}"
+      policy: upsert-only
+      rbac:
+        create: true
+      serviceAccount:
+        create: true
+        name: external-dns
+        annotations:
+          eks.amazonaws.com/role-arn: '{{ .Values.externalDnsRoleArn | default (printf "arn:aws:iam::%s:role/%s-AmazonEKSRoute53ExternalDNS" .Values.awsAccountNumber .Values.environment) }}'
+
+  nvidia-device-plugin:
+    repoURL: https://nvidia.github.io/k8s-device-plugin
+    version: "0.19.0"
+    namespace: kube-system
+    values:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: "{{ .Values.gpuNodeLabel }}"
+                    operator: In
+                    values:
+                      - "true"

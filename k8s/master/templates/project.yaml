@@ -1,0 +1,28 @@
+{{- $projects := required "master requires .Values.projects" .Values.projects }}
+{{- $appEnvironments := required "master requires .Values.appEnvironments; use -f values.dev.yaml" .Values.appEnvironments }}
+{{- range $projectName, $project := $projects }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $projectName }}
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  description: {{ $project.description | quote }}
+  destinations:
+    - namespace: '*'
+      server: https://kubernetes.default.svc
+  sourceRepos:
+    {{- range $project.sourceRepos }}
+    - {{ . }}
+    {{- end }}
+    {{- range $environment, $values := $appEnvironments }}
+    - {{ $values.repoUrl }}
+    {{- end }}
+{{- range $environment, $values := $appEnvironments }}
+{{- include "master.application" (dict "project" $projectName "environment" $environment "path" $project.path "repoUrl" $values.repoUrl "values" $values "syncPolicy" $.Values.syncPolicy) }}
+{{- end }}
+{{- end }}

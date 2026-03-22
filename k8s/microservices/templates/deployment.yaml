@@ -1,0 +1,146 @@
+{{- range $serviceName, $service := .Values.services }}
+{{- if $service.enabled | default true }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $service.namespace.name | default "default" }}
+  labels:
+    app: {{ $serviceName }}
+    environment: {{ $.Values.environment }}
+spec:
+  replicas: {{ $service.replicas | default $.Values.defaults.replicas | default 2 }}
+  selector:
+    matchLabels:
+      app: {{ $serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $serviceName }}
+        environment: {{ $.Values.environment }}
+    spec:
+      {{- if $service.serviceAccount }}
+      serviceAccountName: {{ $serviceName }}-sa
+      {{- end }}
+      {{- if $service.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $service.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $service.tolerations }}
+      tolerations:
+        {{- toYaml $service.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if or $service.volumes $service.s3Volumes $service.awsSecrets }}
+      volumes:
+        {{- if $service.volumes }}
+        {{- toYaml $service.volumes | nindent 8 }}
+        {{- end }}
+        {{- range $volName, $vol := $service.s3Volumes }}
+        - name: s3-{{ $volName }}
+          persistentVolumeClaim:
+            claimName: {{ $serviceName }}-{{ $volName }}-s3-pvc
+            readOnly: {{ $vol.readOnly | default true }}
+        {{- end }}
+        {{- if $service.awsSecrets }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $serviceName }}-secrets
+        {{- end }}
+      {{- end }}
+      containers:
+      - name: {{ $serviceName }}
+        image: {{ include "microservices.imageRepo" $ }}/{{ $service.image.repository | default $serviceName }}:{{ $service.image.tag }}
+        imagePullPolicy: {{ $service.imagePullPolicy | default $.Values.defaults.imagePullPolicy | default "Always" }}
+        ports:
+        - containerPort: {{ $service.containerPort | default $.Values.defaults.containerPort | default 80 }}
+          protocol: TCP
+        {{- if $service.env }}
+        env:
+        {{- range $key, $value := $service.env }}
+        - name: {{ $key }}
+          value: {{ tpl $value $ | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if or $service.envFrom $service.awsSecrets }}
+        envFrom:
+        {{- if $service.envFrom }}
+        {{- toYaml $service.envFrom | nindent 8 }}
+        {{- end }}
+        {{- if $service.awsSecrets }}
+        - secretRef:
+            name: {{ $serviceName }}-secrets
+        {{- end }}
+        {{- end }}
+        {{- if or $service.volumeMounts $service.s3Volumes $service.awsSecrets }}
+        volumeMounts:
+        {{- if $service.volumeMounts }}
+        {{- toYaml $service.volumeMounts | nindent 8 }}
+        {{- end }}
+        {{- range $volName, $vol := $service.s3Volumes }}
+        - name: s3-{{ $volName }}
+          mountPath: {{ $vol.mountPath }}
+          readOnly: {{ $vol.readOnly | default true }}
+        {{- end }}
+        {{- if $service.awsSecrets }}
+        - name: secrets-store
+          mountPath: /mnt/secrets-store
+          readOnly: true
+        {{- end }}
+        {{- end }}
+        {{- if $service.healthCheck }}
+        {{- $defaultPort := $service.containerPort | default $.Values.defaults.containerPort | default 80 }}
+        {{- if $service.healthCheck.startupProbe }}
+        startupProbe:
+          httpGet:
+            path: {{ $service.healthCheck.startupPath | default $service.healthCheck.path | default "/health" }}
+            port: {{ $service.healthCheck.startupPort | default $service.healthCheck.port | default $defaultPort }}
+            {{- $startupScheme := $service.healthCheck.startupScheme | default $service.healthCheck.scheme }}
+            {{- if $startupScheme }}
+            scheme: {{ $startupScheme }}
+            {{- end }}
+          initialDelaySeconds: {{ $service.healthCheck.startupInitialDelaySeconds | default 60 }}
+          periodSeconds: {{ $service.healthCheck.startupPeriodSeconds | default 30 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 10 }}
+          failureThreshold: {{ $service.healthCheck.startupFailureThreshold | default 20 }}
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.livenessPath | default $service.healthCheck.path | default "/health" }}
+            port: {{ $service.healthCheck.livenessPort | default $service.healthCheck.port | default $defaultPort }}
+            {{- $livenessScheme := $service.healthCheck.livenessScheme | default $service.healthCheck.scheme }}
+            {{- if $livenessScheme }}
+            scheme: {{ $livenessScheme }}
+            {{- end }}
+          initialDelaySeconds: {{ $service.healthCheck.livenessInitialDelaySeconds | default $service.healthCheck.initialDelaySeconds | default 30 }}
+          periodSeconds: {{ $service.healthCheck.livenessPeriodSeconds | default $service.healthCheck.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $service.healthCheck.livenessFailureThreshold | default $service.healthCheck.failureThreshold | default 3 }}
+        readinessProbe:
+          httpGet:
+            path: {{ $service.healthCheck.readinessPath | default $service.healthCheck.path | default "/health" }}
+            port: {{ $service.healthCheck.readinessPort | default $service.healthCheck.port | default $defaultPort }}
+            {{- $readinessScheme := $service.healthCheck.readinessScheme | default $service.healthCheck.scheme }}
+            {{- if $readinessScheme }}
+            scheme: {{ $readinessScheme }}
+            {{- end }}
+          initialDelaySeconds: {{ $service.healthCheck.readinessInitialDelaySeconds | default $service.healthCheck.initialDelaySeconds | default 10 }}
+          periodSeconds: {{ $service.healthCheck.readinessPeriodSeconds | default $service.healthCheck.periodSeconds | default 5 }}
+          timeoutSeconds: {{ $service.healthCheck.timeoutSeconds | default 3 }}
+          failureThreshold: {{ $service.healthCheck.readinessFailureThreshold | default $service.healthCheck.failureThreshold | default 3 }}
+        {{- end }}
+        resources:
+          {{- if $service.resources }}
+          {{- toYaml $service.resources | nindent 10 }}
+          {{- else }}
+          {{- toYaml $.Values.defaults.resources | nindent 10 }}
+          {{- end }}
+        {{- if $service.securityContext }}
+        securityContext:
+          {{- toYaml $service.securityContext | nindent 10 }}
+        {{- end }}
+{{- end }}
+{{- end }}

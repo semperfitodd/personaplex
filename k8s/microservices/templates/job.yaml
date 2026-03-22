@@ -1,0 +1,92 @@
+{{- range $jobName, $job := .Values.jobs }}
+{{- if $job.enabled | default false }}
+{{- range $volName, $vol := $job.s3Volumes }}
+{{- include "microservices.s3volume" (dict "parentName" $jobName "volName" $volName "vol" $vol "namespace" ($job.namespace.name | default "default") "awsRegion" ($.Values.awsRegion | default "us-east-1") "root" $) }}
+{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $jobName }}
+  namespace: {{ $job.namespace.name | default "default" }}
+  labels:
+    app: {{ $jobName }}
+    environment: {{ $.Values.environment }}
+spec:
+  backoffLimit: {{ $job.backoffLimit | default 2 }}
+  template:
+    metadata:
+      labels:
+        app: {{ $jobName }}
+        environment: {{ $.Values.environment }}
+    spec:
+      restartPolicy: {{ $job.restartPolicy | default "OnFailure" }}
+      {{- if $job.serviceAccount }}
+      serviceAccountName: {{ $jobName }}-sa
+      {{- else if $job.serviceAccountName }}
+      serviceAccountName: {{ $job.serviceAccountName }}
+      {{- end }}
+      {{- if $job.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $job.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if $job.tolerations }}
+      tolerations:
+        {{- toYaml $job.tolerations | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if $job.secretProviderClass }}
+        - name: secrets-store
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ $job.secretProviderClass }}
+        {{- end }}
+        {{- range $volName, $vol := $job.s3Volumes }}
+        - name: s3-{{ $volName }}
+          persistentVolumeClaim:
+            claimName: {{ $jobName }}-{{ $volName }}-s3-pvc
+            {{- if hasKey $vol "readOnly" }}
+            readOnly: {{ $vol.readOnly }}
+            {{- else }}
+            readOnly: true
+            {{- end }}
+        {{- end }}
+      containers:
+      - name: {{ $jobName }}
+        image: {{ include "microservices.imageRepo" $ }}/{{ $job.image.repository | default $jobName }}:{{ $job.image.tag }}
+        imagePullPolicy: {{ $job.imagePullPolicy | default $.Values.defaults.imagePullPolicy | default "Always" }}
+        {{- if $job.env }}
+        env:
+        {{- range $key, $value := $job.env }}
+        - name: {{ $key }}
+          value: {{ tpl $value $ | quote }}
+        {{- end }}
+        {{- end }}
+        {{- if $job.secretsEnvName }}
+        envFrom:
+          - secretRef:
+              name: {{ $job.secretsEnvName }}
+        {{- end }}
+        volumeMounts:
+          {{- if $job.secretProviderClass }}
+          - name: secrets-store
+            mountPath: /mnt/secrets-store
+            readOnly: true
+          {{- end }}
+          {{- range $volName, $vol := $job.s3Volumes }}
+          - name: s3-{{ $volName }}
+            mountPath: {{ $vol.mountPath }}
+            {{- if hasKey $vol "readOnly" }}
+            readOnly: {{ $vol.readOnly }}
+            {{- else }}
+            readOnly: true
+            {{- end }}
+          {{- end }}
+        {{- if $job.resources }}
+        resources:
+          {{- toYaml $job.resources | nindent 10 }}
+        {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,18 @@
+appEnvironments:
+  personaplex:
+    albControllerRoleArn: arn:aws:iam::704855531002:role/personaplex-AmazonEKSLoadBalancerController
+    argoHostname: personaplex-argocd.brewsentry.com
+    awsAccountNumber: "704855531002"
+    awsRegion: us-east-1
+    clusterName: personaplex
+    ecrRepo: 704855531002.dkr.ecr.us-east-1.amazonaws.com/personaplex
+    environment: personaplex
+    externalDnsRoleArn: arn:aws:iam::704855531002:role/personaplex-AmazonEKSRoute53ExternalDNS
+    hfTokenSecretName: personaplex/hf-token-3fmn1o
+    personaplexRoleArn: arn:aws:iam::704855531002:role/personaplex-personaplex-secrets
+    publicDomain: brewsentry.com
+    publicDomainId: Z02805682TXYB0368277R
+    repoUrl: https://github.com/semperfitodd/personaplex.git
+    s3BucketPtfiles: personaplex-ptfiles-3fmn1o
+    s3BucketWavfiles: personaplex-wavfiles-3fmn1o
+    voiceGeneratorRoleArn: arn:aws:iam::704855531002:role/personaplex-voice-generator-sa

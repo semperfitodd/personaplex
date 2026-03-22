@@ -1,0 +1,25 @@
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  retry:
+    limit: 2
+    backoff:
+      duration: 5s
+      factor: 2
+      maxDuration: 3m0s
+
+projects:
+  devops:
+    description: Project for DevOps
+    path: k8s/devops
+    sourceRepos:
+      - https://argoproj.github.io/argo-helm
+      - https://aws.github.io/eks-charts
+      - https://kubernetes-sigs.github.io/external-dns/
+      - https://nvidia.github.io/k8s-device-plugin
+
+  microservices:
+    description: Project for microservices
+    path: k8s/microservices
+    sourceRepos: []

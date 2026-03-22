@@ -1,0 +1,33 @@
+{{- range $chartName, $chart := .Values.charts }}
+{{- if $chart.enabled | default true }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $chart.name | default $chartName }}
+  namespace: argocd
+spec:
+  project: devops
+  source:
+    repoURL: {{ $chart.repoURL }}
+    chart: {{ $chart.chart | default $chartName }}
+    targetRevision: {{ $chart.version }}
+    {{- if or $chart.values $chart.valuesTpl $chart.releaseName }}
+    helm:
+      {{- if $chart.releaseName }}
+      releaseName: {{ $chart.releaseName }}
+      {{- end }}
+      {{- if $chart.valuesTpl }}
+      values: |
+        {{- tpl $chart.valuesTpl $ | nindent 8 }}
+      {{- else if $chart.values }}
+      values: |
+        {{- tpl (toYaml $chart.values) $ | nindent 8 }}
+      {{- end }}
+    {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ $chart.namespace | default "default" }}
+  {{- include "devops.syncPolicy" $ | nindent 2 }}
+{{- end }}
+{{- end }}
